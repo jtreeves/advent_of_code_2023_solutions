@@ -1,6 +1,7 @@
 from typing import List
 
-digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+numeral_digits = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+word_digits = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
 
 
 class NumberInLine:
@@ -21,14 +22,20 @@ class SolutionResults:
 def solution() -> SolutionResults:
     chunk = extract_data_from_file()
     lines = break_chunk_into_lines(chunk)
+    words_not_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines, False)
+    words_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines, True)
+    results = SolutionResults(words_not_possible_calibration_sum, words_possible_calibration_sum)
+    return results
+
+
+def get_calibration_sum_based_on_word_possibility(lines: List[str], words_possible: bool) -> int:
     total = 0
     for line in lines:
-        numbers_in_line = find_all_numbers_in_line(line)
+        numbers_in_line = find_all_numbers_in_line(line, words_possible)
         final_digit = combine_first_and_last_numbers_from_line_into_new_number(
             numbers_in_line)
         total += final_digit
-    results = SolutionResults(0, total)
-    return results
+    return total
 
 
 def combine_first_and_last_numbers_from_line_into_new_number(numbers_array: List[NumberInLine]) -> int:
@@ -75,8 +82,9 @@ def convert_string_to_number(digit: str) -> int:
         return 0
 
 
-def find_all_numbers_in_line(line: str) -> List[NumberInLine]:
+def find_all_numbers_in_line(line: str, words_possible: bool) -> List[NumberInLine]:
     numbers_in_line: List[NumberInLine] = []
+    digits = numeral_digits + word_digits if words_possible else numeral_digits
     for digit in digits:
         index = line.find(str(digit))
         while index != -1:
