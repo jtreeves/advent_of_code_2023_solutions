@@ -12,6 +12,54 @@ class GameInfo:
         self.id = id
         self.scenarios = scenarios
 
+    def calculate_power_of_game(self) -> int:
+        power = 1
+        color_counts = self.determine_minimum_blocks_required_across_all_scenarios()
+        for color_count in color_counts:
+            power *= color_count.count
+        return power
+
+    def determine_minimum_blocks_required_across_all_scenarios(self) -> List[BlockDetail]:
+        max_red = 0
+        max_green = 0
+        max_blue = 0
+        for scenario in self.scenarios:
+            for block_details in scenario:
+                if block_details.color == "red" and block_details.count > max_red:
+                    max_red = block_details.count
+                if block_details.color == "green" and block_details.count > max_green:
+                    max_green = block_details.count
+                if block_details.color == "blue" and block_details.count > max_blue:
+                    max_blue = block_details.count
+        minimum_blocks_required = [
+            BlockDetail("red", max_red),
+            BlockDetail("green", max_green),
+            BlockDetail("blue", max_blue),
+        ]
+        return minimum_blocks_required
+
+    def get_game_id_if_all_scenarios_possible(self, color_count_rules: List[BlockDetail]) -> int:
+        game_id = self.id
+        if self.check_if_any_maximum_exceeded_in_scenarios(color_count_rules):
+            game_id = 0
+        return game_id
+
+    def check_if_any_maximum_exceeded_in_scenarios(self, color_count_rules: List[BlockDetail]) -> bool:
+        exceeded = False
+        for scenario in self.scenarios:
+            for color_count_pair in color_count_rules:
+                if self.check_if_maximum_exceeded_in_scenario(scenario, color_count_pair.color, color_count_pair.count):
+                    exceeded = True
+        return exceeded
+
+    def check_if_maximum_exceeded_in_scenario(self, scenario: List[BlockDetail], color: str, max: int) -> bool:
+        exceeded = False
+        for block_detail in scenario:
+            if block_detail.color == color:
+                if block_detail.count > max:
+                    exceeded = True
+        return exceeded
+
 
 class SolutionResults:
     def __init__(self, part_1: int, part_2: int) -> None:
@@ -35,10 +83,7 @@ def solution() -> SolutionResults:
 def sum_powers_of_all_games(all_game_infos: List[GameInfo]) -> int:
     power_sum = 0
     for game_info in all_game_infos:
-        scenarios = game_info.scenarios
-        minimum_blocks_required = determine_minimum_blocks_required_across_all_scenarios(
-            scenarios)
-        game_power = calculate_power_of_game(minimum_blocks_required)
+        game_power = game_info.calculate_power_of_game()
         power_sum += game_power
     return power_sum
 
@@ -47,61 +92,9 @@ def sum_all_ids_possible_with_rules(all_game_infos: List[GameInfo]) -> int:
     id_sum = 0
     rules = [BlockDetail("red", 12), BlockDetail("green", 13), BlockDetail("blue", 14)]
     for game_info in all_game_infos:
-        game_id = get_game_id_if_all_scenarios_possible(game_info, rules)
+        game_id = game_info.get_game_id_if_all_scenarios_possible(rules)
         id_sum += game_id
     return id_sum
-
-
-def calculate_power_of_game(color_counts: List[BlockDetail]) -> int:
-    power = 1
-    for color_count in color_counts:
-        power *= color_count.count
-    return power
-
-
-def determine_minimum_blocks_required_across_all_scenarios(scenarios: List[List[BlockDetail]]) -> List[BlockDetail]:
-    max_red = 0
-    max_green = 0
-    max_blue = 0
-    for scenario in scenarios:
-        for block_details in scenario:
-            if block_details.color == "red" and block_details.count > max_red:
-                max_red = block_details.count
-            if block_details.color == "green" and block_details.count > max_green:
-                max_green = block_details.count
-            if block_details.color == "blue" and block_details.count > max_blue:
-                max_blue = block_details.count
-    minimum_blocks_required = [
-        BlockDetail("red", max_red),
-        BlockDetail("green", max_green),
-        BlockDetail("blue", max_blue),
-    ]
-    return minimum_blocks_required
-
-
-def get_game_id_if_all_scenarios_possible(game_info: GameInfo, color_count_rules: List[BlockDetail]) -> int:
-    game_id = game_info.id
-    if check_if_any_maximum_exceeded_in_scenarios(game_info.scenarios, color_count_rules):
-        game_id = 0
-    return game_id
-
-
-def check_if_any_maximum_exceeded_in_scenarios(scenarios: List[List[BlockDetail]], color_count_rules: List[BlockDetail]) -> bool:
-    exceeded = False
-    for scenario in scenarios:
-        for color_count_pair in color_count_rules:
-            if check_if_maximum_exceeded_in_scenario(scenario, color_count_pair.color, color_count_pair.count):
-                exceeded = True
-    return exceeded
-
-
-def check_if_maximum_exceeded_in_scenario(scenario: List[BlockDetail], color: str, max: int) -> bool:
-    exceeded = False
-    for block_detail in scenario:
-        if block_detail.color == color:
-            if block_detail.count > max:
-                exceeded = True
-    return exceeded
 
 
 def compile_info_for_all_games(games: List[str]) -> List[GameInfo]:
