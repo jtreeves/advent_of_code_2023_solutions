@@ -1,4 +1,5 @@
 from typing import List
+import time
 
 
 class Scenario:
@@ -55,21 +56,25 @@ class GameInfo:
 
 
 class SolutionResults:
-    def __init__(self, part_1: int, part_2: int) -> None:
+    def __init__(self, part_1: int, part_2: int, execution_time: float) -> None:
         self.part_1 = part_1
         self.part_2 = part_2
+        self.execution_time = execution_time
 
     def __repr__(self):
-        return f"SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}"
+        return f"SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}\nTotal execution time: {self.execution_time} seconds"
 
 
 def solution(is_official: bool = True) -> SolutionResults:
+    start_time = time.time()
     data = extract_data_from_file(2, is_official)
     games = list_games(data)
     info_for_all_games = compile_info_for_all_games(games)
     id_sum = sum_all_ids_possible_with_rules(info_for_all_games)
     power_sum = sum_powers_of_all_games(info_for_all_games)
-    results = SolutionResults(id_sum, power_sum)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    results = SolutionResults(id_sum, power_sum, execution_time)
     return results
 
 
