@@ -37,11 +37,59 @@ class PartNumber:
         return value
 
 
+class Gear:
+    def __init__(self, cell: Cell, part_numbers: List[PartNumber]) -> None:
+        self.cell = cell
+        self.part_numbers = part_numbers
+        self.ratio = self.get_ratio()
+
+    def __repr__(self) -> str:
+        return f"{self.cell}: {self.ratio}"
+
+    def __hash__(self) -> int:
+        return hash((self.cell, self.ratio))
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Gear):
+            if self.cell == other.cell:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def get_ratio(self) -> int:
+        ratio = 1
+        for part_number in self.part_numbers:
+            ratio *= part_number.value
+        return ratio
+
+
 class Schematic:
     def __init__(self, rows: List[str]) -> None:
         self.grid = Grid(rows)
         self.special_characters = self.find_all_special_characters()
         self.part_numbers = self.find_all_part_numbers()
+        self.gears = self.find_all_gears()
+
+    def find_all_gears(self) -> List[Gear]:
+        gears: List[Gear] = []
+        for cell in self.special_characters:
+            if cell.content == "*":
+                adjacent_numerals = self.find_all_adjacent_numeral_cells(cell)
+                if len(adjacent_numerals) >= 2:
+                    adjacent_parts: List[PartNumber] = []
+                    for adjacency in adjacent_numerals:
+                        for part_number in self.part_numbers:
+                            for part_cell in part_number.cells:
+                                if adjacency == part_cell:
+                                    adjacent_parts.append(part_number)
+                    unique_parts = set(adjacent_parts)
+                    listed_parts = list(unique_parts)
+                    if len(listed_parts) == 2:
+                        gear = Gear(cell, listed_parts)
+                        gears.append(gear)
+        return gears
 
     def find_all_special_characters(self) -> List[Cell]:
         special_characters: List[Cell] = []
@@ -60,10 +108,16 @@ class Schematic:
     def find_all_numeral_cells_adjacent_to_special_character(self) -> List[Cell]:
         adjacent_numerals: List[Cell] = []
         for cell in self.special_characters:
-            adjacent_cells = self.grid.get_adjacent_cells(cell)
-            for adjacent_cell in adjacent_cells:
-                if adjacent_cell.content.isdigit():
-                    adjacent_numerals.append(adjacent_cell)
+            adjacent_cells = self.find_all_adjacent_numeral_cells(cell)
+            adjacent_numerals.extend(adjacent_cells)
+        return list(set(adjacent_numerals))
+
+    def find_all_adjacent_numeral_cells(self, core_cell: Cell) -> List[Cell]:
+        adjacent_numerals: List[Cell] = []
+        adjacent_cells = self.grid.get_adjacent_cells(core_cell)
+        for adjacent_cell in adjacent_cells:
+            if adjacent_cell.content.isdigit():
+                adjacent_numerals.append(adjacent_cell)
         return list(set(adjacent_numerals))
 
     def find_part_number(self, core_cell: Cell) -> PartNumber:
@@ -85,6 +139,12 @@ class Schematic:
             total += part_number.value
         return total
 
+    def calculate_gear_ratios_sum(self) -> int:
+        total = 0
+        for gear in self.gears:
+            total += gear.ratio
+        return total
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
@@ -92,7 +152,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     rows = get_list_of_lines(data)
     schematic = Schematic(rows)
     part_1 = schematic.calculate_part_numbers_sum()
-    part_2 = 2 if data else 0
+    part_2 = schematic.calculate_gear_ratios_sum()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(3, part_1, part_2, execution_time)
