@@ -1,5 +1,6 @@
-from typing import List
 import time
+from typing import List
+from utils.SolutionResults import SolutionResults
 
 numeral_digits = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 word_digits = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
@@ -12,17 +13,6 @@ class NumberInLine:
 
     def __repr__(self):
         return f"Value {self.value} at index {self.index}"
-
-
-class SolutionResults:
-    def __init__(self, day: int, part_1: int, part_2: int, execution_time: float) -> None:
-        self.day = day
-        self.part_1 = part_1
-        self.part_2 = part_2
-        self.execution_time = execution_time
-
-    def __repr__(self):
-        return f"DAY {self.day} SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}\nTotal execution time: {self.execution_time} seconds"
 
 
 def solution(is_official: bool) -> SolutionResults:
@@ -38,7 +28,7 @@ def solution(is_official: bool) -> SolutionResults:
 def get_calibration_sum_based_on_word_possibility(words_possible: bool, is_official: bool) -> int:
     total = 0
     part_number = 2 if words_possible else 1
-    chunks = extract_data_from_file(1, part_number, is_official)
+    chunks = extract_data_from_file_based_on_part(1, part_number, is_official)
     lines = break_chunk_into_lines(chunks)
     for line in lines:
         numbers_in_line = find_all_numbers_in_line(line, words_possible)
@@ -92,7 +82,7 @@ def break_chunk_into_lines(chunk: str) -> List[str]:
     return lines
 
 
-def extract_data_from_file(day_number: int, part_number: int, is_official: bool) -> str:
+def extract_data_from_file_based_on_part(day_number: int, part_number: int, is_official: bool) -> str:
     name = "data" if is_official else f"practice_{part_number}"
     file = open(f"day_{day_number}/{name}.txt", "r")
     data = file.read()
