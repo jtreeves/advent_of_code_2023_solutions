@@ -27,7 +27,7 @@ from day_25.solution import solution as solution_25
 
 
 def print_solution_for_day(day: int, is_official: bool) -> None:
-    solutions = {
+    solutions_mapper = {
         1: solution_1,
         2: solution_2,
         3: solution_3,
@@ -54,7 +54,7 @@ def print_solution_for_day(day: int, is_official: bool) -> None:
         24: solution_24,
         25: solution_25,
     }
-    selected_solution = solutions.get(day, solution_1)
+    selected_solution = solutions_mapper.get(day, solution_1)
     result = selected_solution(is_official)
     print(result)
 
