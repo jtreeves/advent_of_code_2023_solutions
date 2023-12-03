@@ -23,18 +23,17 @@ class SolutionResults:
 
 
 def solution(is_official: bool = True) -> SolutionResults:
-    chunks_1 = extract_data_from_file(1, 1, is_official)
-    lines_1 = break_chunk_into_lines(chunks_1)
-    chunks_2 = extract_data_from_file(1, 2, is_official)
-    lines_2 = break_chunk_into_lines(chunks_2)
-    words_not_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines_1, False)
-    words_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines_2, True)
+    words_not_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(False, is_official)
+    words_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(True, is_official)
     results = SolutionResults(words_not_possible_calibration_sum, words_possible_calibration_sum)
     return results
 
 
-def get_calibration_sum_based_on_word_possibility(lines: List[str], words_possible: bool) -> int:
+def get_calibration_sum_based_on_word_possibility(words_possible: bool, is_official: bool) -> int:
     total = 0
+    part_number = 2 if words_possible else 1
+    chunks = extract_data_from_file(1, part_number, is_official)
+    lines = break_chunk_into_lines(chunks)
     for line in lines:
         numbers_in_line = find_all_numbers_in_line(line, words_possible)
         final_digit = combine_first_and_last_numbers_from_line_into_new_number(
