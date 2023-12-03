@@ -64,8 +64,8 @@ def print_solution_for_day(day: int, is_official: bool) -> None:
 def print_solutions_for_all_active_days(is_official: bool) -> None:
     current_date = date.today()
     current_day = current_date.day
-    days_list = sorted(solve_functions_mapper.keys())[:current_day]
-    for day in days_list:
+    active_days = sorted(solve_functions_mapper.keys())[:current_day]
+    for day in active_days:
         print_solution_for_day(day, is_official)
 
 
