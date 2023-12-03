@@ -1,6 +1,7 @@
 import time
 from typing import List
 from utils.extract_data_from_file import extract_data_from_file
+from utils.get_list_of_lines import get_list_of_lines
 from utils.SolutionResults import SolutionResults
 
 
@@ -60,7 +61,7 @@ class GameInfo:
 def solution(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(2, is_official)
-    games = list_games(data)
+    games = get_list_of_lines(data)
     info_for_all_games = compile_info_for_all_games(games)
     id_sum = sum_all_ids_possible_with_rules(info_for_all_games)
     power_sum = sum_powers_of_all_games(info_for_all_games)
@@ -140,8 +141,3 @@ def determine_game_id(description: str) -> int:
 def separate_description_from_sets(game: str) -> List[str]:
     main_sections = game.split(": ")
     return main_sections
-
-
-def list_games(data: str) -> List[str]:
-    games = data.split("\n")
-    return games

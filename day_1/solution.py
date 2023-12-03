@@ -1,5 +1,6 @@
 import time
 from typing import List
+from utils.get_list_of_lines import get_list_of_lines
 from utils.SolutionResults import SolutionResults
 
 numeral_digits = [1, 2, 3, 4, 5, 6, 7, 8, 9]
@@ -29,7 +30,7 @@ def get_calibration_sum_based_on_word_possibility(words_possible: bool, is_offic
     total = 0
     part_number = 2 if words_possible else 1
     chunks = extract_data_from_file_based_on_part(1, part_number, is_official)
-    lines = break_chunk_into_lines(chunks)
+    lines = get_list_of_lines(chunks)
     for line in lines:
         numbers_in_line = find_all_numbers_in_line(line, words_possible)
         final_digit = combine_first_and_last_numbers_from_line_into_new_number(
@@ -75,11 +76,6 @@ def find_all_numbers_in_line(line: str, words_possible: bool) -> List[NumberInLi
             numbers_in_line.append(number_in_line)
             index = line.find(str(digit), index + 1)
     return numbers_in_line
-
-
-def break_chunk_into_lines(chunk: str) -> List[str]:
-    lines = chunk.split("\n")
-    return lines
 
 
 def extract_data_from_file_based_on_part(day_number: int, part_number: int, is_official: bool) -> str:
