@@ -24,6 +24,8 @@ Part 2: 55413
 Total execution time: 0.009216785430908203 seconds
 ```
 
+To view solutions for all days up to and including today, omit the day positional argument: `python3 main.py`
+
 ## Code Analysis
 
 Unlike most coding challenge approaches, this repo is written more like a library, with type annotations for documentation, and it uses a more OOP approach overall.
