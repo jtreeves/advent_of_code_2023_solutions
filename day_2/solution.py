@@ -58,7 +58,7 @@ class GameInfo:
         return exceeded
 
 
-def solution(is_official: bool) -> SolutionResults:
+def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(2, is_official)
     games = get_list_of_lines(data)

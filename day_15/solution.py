@@ -3,7 +3,7 @@ from utils.extract_data_from_file import extract_data_from_file
 from utils.SolutionResults import SolutionResults
 
 
-def solution(is_official: bool) -> SolutionResults:
+def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(15, is_official)
     part_1 = 1 if data else 0

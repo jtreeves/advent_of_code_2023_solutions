@@ -12,11 +12,11 @@ class NumberInLine:
         self.value = value
         self.index = index
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Value {self.value} at index {self.index}"
 
 
-def solution(is_official: bool) -> SolutionResults:
+def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     words_not_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(False, is_official)
     words_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(True, is_official)
