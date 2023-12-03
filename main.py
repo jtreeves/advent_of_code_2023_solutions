@@ -62,7 +62,7 @@ def print_solution_for_day(day: int, is_official: bool) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Print solution for day")
     parser.add_argument("day", type=int, choices=range(1, 25 + 1), help="Select which day's solutions to display")
-    parser.add_argument("is_official", choices=["True", "False"], help="Select True to work with the final data or False to work with the practice data")
+    parser.add_argument("is_official", choices=["True", "False"], nargs="?", default="True", help="Select True to work with the final data or False to work with the practice data")
     args = parser.parse_args()
     is_official = True if args.is_official == "True" else False
     print_solution_for_day(args.day, is_official)
