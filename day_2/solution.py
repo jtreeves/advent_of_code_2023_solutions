@@ -70,8 +70,8 @@ class SolutionResults:
         return f"SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}"
 
 
-def solution() -> SolutionResults:
-    data = extract_data_from_file()
+def solution(is_official: bool = True) -> SolutionResults:
+    data = extract_data_from_file(2, is_official)
     games = list_games(data)
     info_for_all_games = compile_info_for_all_games(games)
     id_sum = sum_all_ids_possible_with_rules(info_for_all_games)
@@ -150,8 +150,9 @@ def list_games(data: str) -> List[str]:
     return games
 
 
-def extract_data_from_file() -> str:
-    file = open("data.txt", "r")
+def extract_data_from_file(day_number: int, is_official: bool) -> str:
+    name = "data" if is_official else "practice"
+    file = open(f"day_{day_number}/{name}.txt", "r")
     data = file.read()
     file.close()
     return data

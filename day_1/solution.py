@@ -9,6 +9,9 @@ class NumberInLine:
         self.value = value
         self.index = index
 
+    def __repr__(self):
+        return f"Value {self.value} at index {self.index}"
+
 
 class SolutionResults:
     def __init__(self, part_1: int, part_2: int) -> None:
@@ -19,11 +22,13 @@ class SolutionResults:
         return f"SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}"
 
 
-def solution() -> SolutionResults:
-    chunk = extract_data_from_file()
-    lines = break_chunk_into_lines(chunk)
-    words_not_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines, False)
-    words_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines, True)
+def solution(is_official: bool = True) -> SolutionResults:
+    chunks_1 = extract_data_from_file(1, 1, is_official)
+    lines_1 = break_chunk_into_lines(chunks_1)
+    chunks_2 = extract_data_from_file(1, 2, is_official)
+    lines_2 = break_chunk_into_lines(chunks_2)
+    words_not_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines_1, False)
+    words_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(lines_2, True)
     results = SolutionResults(words_not_possible_calibration_sum, words_possible_calibration_sum)
     return results
 
@@ -99,8 +104,9 @@ def break_chunk_into_lines(chunk: str) -> List[str]:
     return lines
 
 
-def extract_data_from_file() -> str:
-    file = open("data.txt", "r")
+def extract_data_from_file(day_number: int, part_number: int, is_official: bool) -> str:
+    name = "data" if is_official else f"practice_{part_number}"
+    file = open(f"day_{day_number}/{name}.txt", "r")
     data = file.read()
     file.close()
     return data
