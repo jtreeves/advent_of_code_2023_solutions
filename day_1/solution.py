@@ -15,22 +15,23 @@ class NumberInLine:
 
 
 class SolutionResults:
-    def __init__(self, part_1: int, part_2: int, execution_time: float) -> None:
+    def __init__(self, day: int, part_1: int, part_2: int, execution_time: float) -> None:
+        self.day = day
         self.part_1 = part_1
         self.part_2 = part_2
         self.execution_time = execution_time
 
     def __repr__(self):
-        return f"SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}\nTotal execution time: {self.execution_time} seconds"
+        return f"DAY {self.day} SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}\nTotal execution time: {self.execution_time} seconds"
 
 
-def solution(is_official: bool = True) -> SolutionResults:
+def solution(is_official: bool) -> SolutionResults:
     start_time = time.time()
     words_not_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(False, is_official)
     words_possible_calibration_sum = get_calibration_sum_based_on_word_possibility(True, is_official)
     end_time = time.time()
     execution_time = end_time - start_time
-    results = SolutionResults(words_not_possible_calibration_sum, words_possible_calibration_sum, execution_time)
+    results = SolutionResults(1, words_not_possible_calibration_sum, words_possible_calibration_sum, execution_time)
     return results
 
 
@@ -97,7 +98,3 @@ def extract_data_from_file(day_number: int, part_number: int, is_official: bool)
     data = file.read()
     file.close()
     return data
-
-
-result = solution()
-print(result)

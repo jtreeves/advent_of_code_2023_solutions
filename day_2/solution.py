@@ -1,5 +1,6 @@
 from typing import List
 import time
+from utils.extract_data_from_file import extract_data_from_file
 
 
 class Scenario:
@@ -56,16 +57,17 @@ class GameInfo:
 
 
 class SolutionResults:
-    def __init__(self, part_1: int, part_2: int, execution_time: float) -> None:
+    def __init__(self, day: int, part_1: int, part_2: int, execution_time: float) -> None:
+        self.day = day
         self.part_1 = part_1
         self.part_2 = part_2
         self.execution_time = execution_time
 
     def __repr__(self):
-        return f"SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}\nTotal execution time: {self.execution_time} seconds"
+        return f"DAY {self.day} SOLUTIONS\nPart 1: {self.part_1}\nPart 2: {self.part_2}\nTotal execution time: {self.execution_time} seconds"
 
 
-def solution(is_official: bool = True) -> SolutionResults:
+def solution(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(2, is_official)
     games = list_games(data)
@@ -74,7 +76,7 @@ def solution(is_official: bool = True) -> SolutionResults:
     power_sum = sum_powers_of_all_games(info_for_all_games)
     end_time = time.time()
     execution_time = end_time - start_time
-    results = SolutionResults(id_sum, power_sum, execution_time)
+    results = SolutionResults(2, id_sum, power_sum, execution_time)
     return results
 
 
@@ -153,15 +155,3 @@ def separate_description_from_sets(game: str) -> List[str]:
 def list_games(data: str) -> List[str]:
     games = data.split("\n")
     return games
-
-
-def extract_data_from_file(day_number: int, is_official: bool) -> str:
-    name = "data" if is_official else "practice"
-    file = open(f"day_{day_number}/{name}.txt", "r")
-    data = file.read()
-    file.close()
-    return data
-
-
-result = solution()
-print(result)
