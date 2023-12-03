@@ -64,26 +64,9 @@ def determine_first_and_last_numbers_for_line(numbers_array: List[NumberInLine])
 
 
 def convert_string_to_number(digit: str) -> int:
-    if digit == 'one':
-        return 1
-    elif digit == 'two':
-        return 2
-    elif digit == 'three':
-        return 3
-    elif digit == 'four':
-        return 4
-    elif digit == 'five':
-        return 5
-    elif digit == 'six':
-        return 6
-    elif digit == 'seven':
-        return 7
-    elif digit == 'eight':
-        return 8
-    elif digit == 'nine':
-        return 9
-    else:
-        return 0
+    index = word_digits.index(digit)
+    value = index + 1
+    return value
 
 
 def find_all_numbers_in_line(line: str, words_possible: bool) -> List[NumberInLine]:
