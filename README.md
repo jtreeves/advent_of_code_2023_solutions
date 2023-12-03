@@ -6,11 +6,20 @@ This repo contains my solutions to the **Advent of Code** challenge problems fro
 
 ## Setup
 
--   Clone this repository: `git clone https://github.com/jtreeves/advent_of_code_2023_solutions.git`
--   Ensure Python3 installed (v3.11.4 ideally): `python3 --version`
+### Prerequisites
+
+-   Python3 (v3.11.4 ideally): `python3 --version`
+
+### Installation
+
+1.  Clone this repository: `git clone https://github.com/jtreeves/advent_of_code_2023_solutions.git`
+2.  Enter the newly created directory, then create an environment for it: `python3 -m venv aocenv`
+3.  Activate the new environment: `source aocenv/bin/activate`
+4.  Install requirements: `pip3 install -r requirements.txt`
 
 ## Viewing the Solutions
 
+-   Ensure the environment is active: `source aocenv/bin/activate`
 -   From the root of the repo, run the `main.py` file, with a positional argument for the day to run: `python3 main.py 1` (substituting the specific day for `1`)
 -   Optionally, provide an additional boolean positional argument to select between viewing solutions from the practice data or the final data, where `True` is for the final data and `False` is for the practice data: `python3 main.py 1 False` (if not provided, it defaults to `True`)
 -   Each solution printed will indicate its day and provide the values for both parts 1 and 2, along with a cumulative execution time
@@ -24,7 +33,8 @@ Part 2: 55413
 Total execution time: 0.009216785430908203 seconds
 ```
 
-To view solutions for all days up to and including today, omit the day positional argument: `python3 main.py`
+-   To view solutions for all days up to and including today, omit the day positional argument: `python3 main.py`
+-   To deactivate the environment after working with this repo: `deactivate`
 
 ## Code Analysis
 
