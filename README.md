@@ -118,3 +118,21 @@ def find_part_number(self, core_cell: Cell) -> PartNumber:
     part_number = PartNumber(cells)
     return part_number
 ```
+
+## Future Goals
+
+I would to include solutions to each day's problems in multiple programming languages, with different versions emphasizing that specific language's unique idioms. If time permits, I would like to add these:
+
+-   C
+-   Java
+-   Ruby
+-   PHP
+-   Perl
+-   Lisp
+-   Scala
+-   Go
+-   Rust
+-   Haskell
+-   Fortran
+
+It would be cute to orient it as 12 Coding Languages of Christmas, if I end up being able to add all of them. If I really wanted to stretch, I could somehow do 25 languages total and include things like SQL.
