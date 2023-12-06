@@ -5,11 +5,16 @@ from utils.SolutionResults import SolutionResults
 
 
 class Conversion:
-    def __init__(self, description: str) -> None:
-        elements = description.split(" ")
-        self.minimum = int(elements[1])
-        self.maximum = self.minimum + int(elements[2]) - 1
-        self.increment = (self.minimum - int(elements[0])) * -1
+    def __init__(self, description: str, minimum: int | float = 0, maximum: int | float = 0, increment: int = 0) -> None:
+        if description:
+            elements = description.split(" ")
+            self.minimum = int(elements[1])
+            self.maximum = self.minimum + int(elements[2]) - 1
+            self.increment = (self.minimum - int(elements[0])) * -1
+        else:
+            self.minimum = minimum
+            self.maximum = maximum
+            self.increment = increment
 
     def __repr__(self) -> str:
         return f"({self.minimum}, {self.maximum}): {self.increment}"
@@ -33,7 +38,8 @@ class TypeConversions:
             conversion = Conversion(conversion_description)
             conversions.append(conversion)
         sorted_conversions = sorted(conversions, key=lambda conversion: conversion.minimum)
-        return sorted_conversions
+        conversions_with_gaps_filled = self.fill_gaps(sorted_conversions)
+        return conversions_with_gaps_filled
 
     def convert_value(self, input: int) -> int:
         result = 0
@@ -46,6 +52,18 @@ class TypeConversions:
         if result == 0:
             result = input
         return result
+
+    def fill_gaps(self, initial_conversions: List[Conversion]) -> List[Conversion]:
+        final_conversions: List[Conversion] = [Conversion('', float('-inf'), initial_conversions[0].minimum - 1, 0)]
+        for i in range(len(initial_conversions) - 1):
+            current_conversion = initial_conversions[i]
+            next_conversion = initial_conversions[i + 1]
+            final_conversions.append(current_conversion)
+            if current_conversion.maximum < next_conversion.minimum - 1:
+                final_conversions.append(Conversion('', current_conversion.maximum + 1, next_conversion.minimum - 1))
+        final_conversions.append(initial_conversions[-1])
+        final_conversions.append(Conversion('', initial_conversions[-1].maximum + 1, float('inf')))
+        return final_conversions
 
 
 class Almanac:
@@ -105,11 +123,16 @@ class Almanac:
                     seeds.append(self.seeds[index] + sub_index)
         return seeds
 
+    def find_seed_range_matching_location_range(self, location_range: List[int | float]) -> List[int | float]:
+        seed_range: List[int | float] = []
+        return seed_range
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(5, is_official)
     almanac = Almanac(data)
+    print(almanac)
     part_1 = almanac.determine_lowest_location(almanac.seeds)
     part_2 = almanac.determine_lowest_location(almanac.determine_seeds_by_pairs())
     end_time = time.time()
