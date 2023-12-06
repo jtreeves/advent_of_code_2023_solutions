@@ -85,25 +85,33 @@ class Almanac:
         location = self.type_conversions["humidity"].convert_value(humidity)
         return location
 
-    def determine_locations_for_all_seeds(self) -> List[int]:
+    def determine_locations_for_all_seeds(self, seeds: List[int]) -> List[int]:
         locations: List[int] = []
-        for seed in self.seeds:
+        for seed in seeds:
             location = self.determine_location_for_seed(seed)
             locations.append(location)
         return locations
 
-    def determine_lowest_location(self) -> int:
-        locations = self.determine_locations_for_all_seeds()
+    def determine_lowest_location(self, seeds: List[int]) -> int:
+        locations = self.determine_locations_for_all_seeds(seeds)
         sorted_locations = sorted(locations)
         return sorted_locations[0]
+
+    def determine_seeds_by_pairs(self) -> List[int]:
+        seeds: List[int] = []
+        for index in range(len(self.seeds) - 1):
+            if index % 2 == 0:
+                for sub_index in range(self.seeds[index + 1]):
+                    seeds.append(self.seeds[index] + sub_index)
+        return seeds
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(5, is_official)
     almanac = Almanac(data)
-    part_1 = almanac.determine_lowest_location()
-    part_2 = 2 if data else 0
+    part_1 = almanac.determine_lowest_location(almanac.seeds)
+    part_2 = almanac.determine_lowest_location(almanac.determine_seeds_by_pairs())
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(5, part_1, part_2, execution_time)
