@@ -30,6 +30,7 @@ class Race:
 class Summary:
     def __init__(self, description: str) -> None:
         self.races = self.determine_race_conditions(description)
+        self.single_race = self.determine_single_race_condition(description)
 
     def determine_race_conditions(self, description: str) -> List[Race]:
         sections = description.split("\n")
@@ -46,13 +47,19 @@ class Summary:
             margin *= race.calculate_total_scenarios()
         return margin
 
+    def determine_single_race_condition(self, description: str) -> Race:
+        sections = description.split("\n")
+        time = int(sections[0].split(":")[1].replace(" ", ""))
+        distance = int(sections[1].split(":")[1].replace(" ", ""))
+        return Race(time, distance)
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(6, is_official)
     summary = Summary(data)
     part_1 = summary.calculate_margin_of_error()
-    part_2 = 2 if data else 0
+    part_2 = summary.single_race.calculate_total_scenarios()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(6, part_1, part_2, execution_time)
