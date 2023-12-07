@@ -4,6 +4,14 @@ from utils.extract_data_from_file import extract_data_from_file
 from utils.SolutionResults import SolutionResults
 
 
+class ReverseConversion:
+    def __init__(self, description: str) -> None:
+        elements = description.split(" ")
+        self.minimum = int(elements[0])
+        self.maximum = self.minimum + int(elements[2]) - 1
+        self.increment = int(elements[0]) - self.minimum
+
+
 class Conversion:
     def __init__(self, description: str, minimum: int | float = 0, maximum: int | float = 0, increment: int = 0) -> None:
         if description:
@@ -61,8 +69,6 @@ class TypeConversions:
                 if input >= conversion.minimum and input <= conversion.maximum:
                     result = input + conversion.increment
                 searched_conversions += 1
-        if result == 0:
-            result = input
         return result
 
     def fill_gaps(self, initial_conversions: List[Conversion]) -> List[Conversion]:
@@ -90,6 +96,7 @@ class Almanac:
         elements = description.split("\n\n")
         self.seeds = self.determine_seeds(elements[0])
         self.type_conversions = self.determine_type_conversions(elements[1:])
+        self.seed_ranges_checked: dict[str, int] = {}
 
     def __repr__(self) -> str:
         description = f"{self.seeds}\n\n"
@@ -231,10 +238,20 @@ class Almanac:
                 for seed_range in seed_ranges:
                     for possible_seed_range in all_seed_ranges:
                         if (possible_seed_range[0] >= seed_range.minimum and possible_seed_range[0] <= seed_range.maximum) or (possible_seed_range[1] >= seed_range.minimum and possible_seed_range[1] <= seed_range.maximum):
-                            possible_minimum = self.determine_minimum_location_for_seed_range(max(int(seed_range.minimum) if seed_range.minimum != float('-inf') else 0, possible_seed_range[0]), min(int(seed_range.maximum) if seed_range.maximum != float('inf') else possible_seed_range[1], possible_seed_range[1]))
+                            potential_range = [max(int(seed_range.minimum) if seed_range.minimum != float('-inf') else 0, possible_seed_range[0]), min(int(seed_range.maximum) if seed_range.maximum != float('inf') else possible_seed_range[1], possible_seed_range[1])]
+                            hash_range = f"a{potential_range[0]}b{potential_range[1]}"
+                            find_existing = self.seed_ranges_checked.get(hash_range, None)
+                            if find_existing:
+                                possible_minimum = find_existing
+                            else:
+                                possible_minimum = self.determine_minimum_location_for_seed_range(potential_range[0], potential_range[1])
+                                self.seed_ranges_checked[hash_range] = possible_minimum
                             possible_minima.append(possible_minimum)
         sorted_minima = sorted(possible_minima)
         return sorted_minima[0]
+
+    # def get_seed_from_location(self, location: int) -> int:
+    #     humidity = self.type_conversions["humidity"].conversions
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
