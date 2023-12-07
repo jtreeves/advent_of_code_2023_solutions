@@ -136,4 +136,4 @@ Consider all of the initial seed numbers listed in the ranges on the first line 
 
 ### Solution
 
-NOT YET SOLVED
+20283860

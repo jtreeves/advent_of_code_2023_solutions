@@ -5,11 +5,16 @@ from utils.SolutionResults import SolutionResults
 
 
 class ReverseConversion:
-    def __init__(self, description: str) -> None:
-        elements = description.split(" ")
-        self.minimum = int(elements[0])
-        self.maximum = self.minimum + int(elements[2]) - 1
-        self.increment = int(elements[0]) - self.minimum
+    def __init__(self, description: str, minimum: int | float = 0, maximum: int | float = 0, increment: int = 0) -> None:
+        if description:
+            elements = description.split(" ")
+            self.minimum = int(elements[0])
+            self.maximum = self.minimum + int(elements[2]) - 1
+            self.increment = int(elements[1]) - self.minimum
+        else:
+            self.minimum = minimum
+            self.maximum = maximum
+            self.increment = increment
 
 
 class Conversion:
@@ -47,6 +52,7 @@ class TypeConversions:
         self.source = transformation_parts[0]
         self.destination = transformation_parts[1]
         self.conversions = self.determine_conversions(elements[1])
+        self.reverse_conversions = self.determine_reverse_conversions(elements[1])
 
     def __repr__(self) -> str:
         return f"{self.source} -> {self.destination}\n{self.conversions}"
@@ -61,11 +67,31 @@ class TypeConversions:
         conversions_with_gaps_filled = self.fill_gaps(sorted_conversions)
         return conversions_with_gaps_filled
 
+    def determine_reverse_conversions(self, description: str) -> List[ReverseConversion]:
+        conversion_descriptions = description.split("\n")
+        conversions: List[ReverseConversion] = []
+        for conversion_description in conversion_descriptions:
+            conversion = ReverseConversion(conversion_description)
+            conversions.append(conversion)
+        sorted_conversions = sorted(conversions, key=lambda conversion: conversion.minimum)
+        conversions_with_gaps_filled = self.reverse_fill_gaps(sorted_conversions)
+        return conversions_with_gaps_filled
+
     def convert_value(self, input: int) -> int:
         result = 0
         searched_conversions = 0
         while searched_conversions < len(self.conversions):
             for conversion in self.conversions:
+                if input >= conversion.minimum and input <= conversion.maximum:
+                    result = input + conversion.increment
+                searched_conversions += 1
+        return result
+
+    def reverse_convert_value(self, input: int) -> int:
+        result = 0
+        searched_conversions = 0
+        while searched_conversions < len(self.reverse_conversions):
+            for conversion in self.reverse_conversions:
                 if input >= conversion.minimum and input <= conversion.maximum:
                     result = input + conversion.increment
                 searched_conversions += 1
@@ -81,6 +107,18 @@ class TypeConversions:
                 final_conversions.append(Conversion('', current_conversion.maximum + 1, next_conversion.minimum - 1))
         final_conversions.append(initial_conversions[-1])
         final_conversions.append(Conversion('', initial_conversions[-1].maximum + 1, float('inf')))
+        return final_conversions
+
+    def reverse_fill_gaps(self, initial_conversions: List[ReverseConversion]) -> List[ReverseConversion]:
+        final_conversions: List[ReverseConversion] = [ReverseConversion('', float('-inf'), initial_conversions[0].minimum - 1, 0)]
+        for i in range(len(initial_conversions) - 1):
+            current_conversion = initial_conversions[i]
+            next_conversion = initial_conversions[i + 1]
+            final_conversions.append(current_conversion)
+            if current_conversion.maximum < next_conversion.minimum - 1:
+                final_conversions.append(ReverseConversion('', current_conversion.maximum + 1, next_conversion.minimum - 1))
+        final_conversions.append(initial_conversions[-1])
+        final_conversions.append(ReverseConversion('', initial_conversions[-1].maximum + 1, float('inf')))
         return final_conversions
 
     def get_reversal_for_conversion(self, conversion: Conversion) -> Conversion:
@@ -250,8 +288,27 @@ class Almanac:
         sorted_minima = sorted(possible_minima)
         return sorted_minima[0]
 
-    # def get_seed_from_location(self, location: int) -> int:
-    #     humidity = self.type_conversions["humidity"].conversions
+    def get_seed_from_location(self, location: int) -> int:
+        humidity = self.type_conversions["humidity"].reverse_convert_value(location)
+        temperature = self.type_conversions["temperature"].reverse_convert_value(humidity)
+        light = self.type_conversions["light"].reverse_convert_value(temperature)
+        water = self.type_conversions["water"].reverse_convert_value(light)
+        fertilizer = self.type_conversions["fertilizer"].reverse_convert_value(water)
+        soil = self.type_conversions["soil"].reverse_convert_value(fertilizer)
+        seed = self.type_conversions["seed"].reverse_convert_value(soil)
+        return seed
+
+    def find_lowest_location_for_existing_seeds(self) -> int:
+        seed_ranges = self.find_all_seed_ranges()
+        location = 0
+        found_seed = False
+        while not found_seed:
+            location += 1
+            matching_seed = self.get_seed_from_location(location)
+            for seed_range in seed_ranges:
+                if matching_seed in range(seed_range[0], seed_range[1]):
+                    found_seed = True
+        return location
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
@@ -259,7 +316,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     data = extract_data_from_file(5, is_official)
     almanac = Almanac(data)
     part_1 = almanac.determine_lowest_location(almanac.seeds)
-    part_2 = almanac.determine_minimum_location_based_on_location_ranges(almanac.type_conversions["humidity"].conversions)
+    part_2 = almanac.find_lowest_location_for_existing_seeds()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(5, part_1, part_2, execution_time)
