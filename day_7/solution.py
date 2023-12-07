@@ -4,7 +4,7 @@ from utils.extract_data_from_file import extract_data_from_file
 from utils.get_list_of_lines import get_list_of_lines
 from utils.SolutionResults import SolutionResults
 
-card_orders = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
+plain_card_orders = ["2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"]
 joker_card_orders = ["J", "2", "3", "4", "5", "6", "7", "8", "9", "T", "Q", "K", "A"]
 
 
@@ -101,32 +101,36 @@ class CardSet:
             hands.append(hand)
         return hands
 
-    def order_hands(self) -> List[Hand]:
-        return sorted(self.hands, key=lambda x: (x.value, card_orders.index(x.cards[0]), card_orders.index(x.cards[1]), card_orders.index(x.cards[2]), card_orders.index(x.cards[3]), card_orders.index(x.cards[4])))
+    def order_hands(self, with_jokers: bool) -> List[Hand]:
+        card_orders = plain_card_orders if not with_jokers else joker_card_orders
+        ordered_hands = sorted(self.hands, key=lambda x: (x.value if not with_jokers else x.joker_value, card_orders.index(x.cards[0]), card_orders.index(x.cards[1]), card_orders.index(x.cards[2]), card_orders.index(x.cards[3]), card_orders.index(x.cards[4])))
+        return ordered_hands
+
+    def calculate_winnings(self, with_jokers: bool) -> int:
+        winnings = 0
+        ordered_hands = self.order_hands_without_jokers() if not with_jokers else self.order_hands_with_jokers()
+        for index in range(len(ordered_hands)):
+            winnings += (index + 1) * ordered_hands[index].bid
+        return winnings
+
+    def order_hands_without_jokers(self) -> List[Hand]:
+        return self.order_hands(False)
 
     def order_hands_with_jokers(self) -> List[Hand]:
-        return sorted(self.hands, key=lambda x: (x.joker_value, joker_card_orders.index(x.cards[0]), joker_card_orders.index(x.cards[1]), joker_card_orders.index(x.cards[2]), joker_card_orders.index(x.cards[3]), joker_card_orders.index(x.cards[4])))
+        return self.order_hands(True)
 
-    def calculate_winnings(self) -> int:
-        winnings = 0
-        ordered_hands = self.order_hands()
-        for index in range(len(ordered_hands)):
-            winnings += (index + 1) * ordered_hands[index].bid
-        return winnings
+    def calculate_winnings_without_jokers(self) -> int:
+        return self.calculate_winnings(False)
 
     def calculate_winnings_with_jokers(self) -> int:
-        winnings = 0
-        ordered_hands = self.order_hands_with_jokers()
-        for index in range(len(ordered_hands)):
-            winnings += (index + 1) * ordered_hands[index].bid
-        return winnings
+        return self.calculate_winnings(True)
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(7, is_official)
     cards = CardSet(data)
-    part_1 = cards.calculate_winnings()
+    part_1 = cards.calculate_winnings_without_jokers()
     part_2 = cards.calculate_winnings_with_jokers()
     end_time = time.time()
     execution_time = end_time - start_time
