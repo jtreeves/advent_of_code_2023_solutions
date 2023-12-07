@@ -20,35 +20,13 @@ class Hand:
         return f"{self.cards}: {self.bid} -> {self.value}"
 
     def calculate_value(self) -> int:
-        value = 0
-        sorted_cards = sorted(self.cards)
-        matches: dict[str, int] = {}
-        for index in range(len(sorted_cards) - 1):
-            if sorted_cards[index] == sorted_cards[index + 1]:
-                card = sorted_cards[index]
-                if matches.get(card):
-                    matches[card] += 1
-                else:
-                    matches[card] = 2
-        if len(matches.items()) == 0:
-            value = 1
-        else:
-            for inner_value in matches.values():
-                value += inner_value ** inner_value
+        matches = self.determine_matches()
+        value = self.calculate_final_value(matches)
         return value
 
     def calculate_value_with_jokers(self) -> int:
-        value = 0
-        sorted_cards = sorted(self.cards)
-        matches: dict[str, int] = {}
-        for index in range(len(sorted_cards) - 1):
-            if sorted_cards[index] == sorted_cards[index + 1]:
-                card = sorted_cards[index]
-                if matches.get(card):
-                    matches[card] += 1
-                else:
-                    matches[card] = 2
-        if "J" in sorted_cards:
+        matches = self.determine_matches()
+        if "J" in self.cards:
             if len(matches.items()) == 0:
                 matches["J"] = 2
             else:
@@ -75,6 +53,23 @@ class Hand:
                         highest_match = temp_value + matches["J"]
                         matches[temp_key] = highest_match
                         del matches["J"]
+        value = self.calculate_final_value(matches)
+        return value
+
+    def determine_matches(self) -> dict[str, int]:
+        sorted_cards = sorted(self.cards)
+        matches: dict[str, int] = {}
+        for index in range(len(sorted_cards) - 1):
+            if sorted_cards[index] == sorted_cards[index + 1]:
+                card = sorted_cards[index]
+                if matches.get(card):
+                    matches[card] += 1
+                else:
+                    matches[card] = 2
+        return matches
+
+    def calculate_final_value(self, matches: dict[str, int]) -> int:
+        value = 0
         if len(matches.items()) == 0:
             value = 1
         else:
