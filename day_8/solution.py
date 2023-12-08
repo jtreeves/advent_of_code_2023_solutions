@@ -1,5 +1,5 @@
 import time
-from math import gcd
+from math import lcm
 from typing import List
 from utils.extract_data_from_file import extract_data_from_file
 from utils.get_list_of_lines import get_list_of_lines
@@ -28,15 +28,6 @@ class Node:
         else:
             next_node_name = self.destinations.right
         return next_node_name
-
-
-class Pattern:
-    def __init__(self, start_index: int, length: int) -> None:
-        self.start_index = start_index
-        self.length = length
-
-    def __repr__(self) -> str:
-        return f"{self.start_index} -> {self.length}"
 
 
 class Network:
@@ -76,7 +67,7 @@ class Network:
             steps += 1
         return steps
 
-    def determine_steps_pattern_from_semi_start_to_semi_finish(self, start_node: Node) -> Pattern:
+    def determine_steps_pattern_length_from_semi_start_to_semi_finish(self, start_node: Node) -> int:
         current_node = start_node
         steps = 0
         pattern: List[int] = []
@@ -96,28 +87,21 @@ class Network:
                 else:
                     pattern.append(steps)
             steps += 1
-        return Pattern(pattern[0], pattern[1] - pattern[0])
+        length = pattern[1] - pattern[0]
+        return length
 
-    def determine_steps_patterns_for_all_semi_starts(self) -> List[Pattern]:
+    def determine_steps_pattern_lengths_for_all_semi_starts(self) -> List[int]:
         start_nodes = self.find_all_start_nodes()
-        patterns: List[Pattern] = []
+        pattern_lengths: List[int] = []
         for node in start_nodes:
-            pattern = self.determine_steps_pattern_from_semi_start_to_semi_finish(node)
-            patterns.append(pattern)
-        return patterns
+            length = self.determine_steps_pattern_length_from_semi_start_to_semi_finish(node)
+            pattern_lengths.append(length)
+        return pattern_lengths
 
     def find_first_overlap_in_patterns(self) -> int:
-        patterns = self.determine_steps_patterns_for_all_semi_starts()
-        first_overlap = find_lcm_of_increments(patterns)
+        lengths = self.determine_steps_pattern_lengths_for_all_semi_starts()
+        first_overlap = lcm(*lengths)
         return first_overlap
-
-
-def find_lcm_of_increments(patterns: List[Pattern]) -> int:
-    increments = [pattern.length for pattern in patterns]
-    lcm = increments[0]
-    for increment in increments[1:]:
-        lcm = lcm * increment // gcd(lcm, increment)
-    return lcm
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
