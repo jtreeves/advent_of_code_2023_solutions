@@ -1,4 +1,6 @@
 import time
+from math import gcd
+from typing import List
 from utils.extract_data_from_file import extract_data_from_file
 from utils.get_list_of_lines import get_list_of_lines
 from utils.SolutionResults import SolutionResults
@@ -17,12 +19,24 @@ class Node:
         self.name = elements[0]
         self.destinations = DestinationPair(elements[1])
 
+    def __repr__(self) -> str:
+        return f"{self.name}: ({self.destinations.left}, {self.destinations.right})"
+
     def find_next_node(self, current_direction: str) -> str:
         if current_direction == "L":
             next_node_name = self.destinations.left
         else:
             next_node_name = self.destinations.right
         return next_node_name
+
+
+class Pattern:
+    def __init__(self, start_index: int, length: int) -> None:
+        self.start_index = start_index
+        self.length = length
+
+    def __repr__(self) -> str:
+        return f"{self.start_index} -> {self.length}"
 
 
 class Network:
@@ -45,6 +59,13 @@ class Network:
             nodes[node.name] = node
         return nodes
 
+    def find_all_start_nodes(self) -> List[Node]:
+        start_nodes: List[Node] = []
+        for node in self.nodes.values():
+            if node.name[2] == "A":
+                start_nodes.append(node)
+        return start_nodes
+
     def count_steps_from_start_to_finish(self) -> int:
         current_node = self.nodes["AAA"]
         steps = 0
@@ -55,13 +76,56 @@ class Network:
             steps += 1
         return steps
 
+    def determine_steps_pattern_from_semi_start_to_semi_finish(self, start_node: Node) -> Pattern:
+        current_node = start_node
+        steps = 0
+        pattern: List[int] = []
+        pattern_determined = False
+        while not pattern_determined:
+            current_direction = self.instructions[steps % len(self.instructions)]
+            next_node_name = current_node.find_next_node(current_direction)
+            current_node = self.nodes[next_node_name]
+            if current_node.name[2] == "Z":
+                starting_index = 0 if len(pattern) == 0 else pattern[-1]
+                change_in_distance = steps - starting_index
+                if len(pattern) > 1:
+                    if change_in_distance != pattern[1] - pattern[0]:
+                        pattern.append(steps)
+                    else:
+                        pattern_determined = True
+                else:
+                    pattern.append(steps)
+            steps += 1
+        return Pattern(pattern[0], pattern[1] - pattern[0])
+
+    def determine_steps_patterns_for_all_semi_starts(self) -> List[Pattern]:
+        start_nodes = self.find_all_start_nodes()
+        patterns: List[Pattern] = []
+        for node in start_nodes:
+            pattern = self.determine_steps_pattern_from_semi_start_to_semi_finish(node)
+            patterns.append(pattern)
+        return patterns
+
+    def find_first_overlap_in_patterns(self) -> int:
+        patterns = self.determine_steps_patterns_for_all_semi_starts()
+        first_overlap = find_lcm_of_increments(patterns)
+        return first_overlap
+
+
+def find_lcm_of_increments(patterns: List[Pattern]) -> int:
+    increments = [pattern.length for pattern in patterns]
+    lcm = increments[0]
+    for increment in increments[1:]:
+        lcm = lcm * increment // gcd(lcm, increment)
+    return lcm
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(8, is_official)
     network = Network(data)
     part_1 = network.count_steps_from_start_to_finish()
-    part_2 = 2 if data else 0
+    part_2 = network.find_first_overlap_in_patterns()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(8, part_1, part_2, execution_time)
