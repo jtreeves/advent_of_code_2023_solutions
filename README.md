@@ -2,7 +2,7 @@
 
 _My solutions to the annual challenge problems_
 
-This repo contains my solutions to the **Advent of Code** challenge problems from [2023](https://adventofcode.com/2023). The code is written in **Python**.
+This repo contains my solutions to the **Advent of Code** challenge problems from [2023](https://adventofcode.com/2023). The code is written in **Python**. It pairs with my [calendar repo](https://github.com/jtreeves/advent-of-code-2023-calendar).
 
 ## Setup
 
