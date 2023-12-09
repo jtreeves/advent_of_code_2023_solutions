@@ -190,6 +190,7 @@ class Almanac:
         seed = self.type_conversions["seed"].reverse_convert_value(soil)
         return seed
 
+    # EXCEPTION: Brute-force technique requires more than a minute to execute with full data
     def find_lowest_location_for_existing_seeds(self) -> int:
         seed_ranges = self.find_all_seed_ranges()
         location = 0
