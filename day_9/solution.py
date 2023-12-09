@@ -9,7 +9,8 @@ class History:
     def __init__(self, summary: str) -> None:
         self.values = self.determine_values(summary)
         self.layers = self.generate_all_layers()
-        self.prediction = self.predict_next_value()
+        self.predicted_next = self.predict_next_value()
+        self.predicted_previous = self.predict_previous_value()
 
     def determine_values(self, summary: str) -> List[int]:
         extractions = summary.split(" ")
@@ -46,6 +47,12 @@ class History:
             prediction += layer[-1]
         return prediction
 
+    def predict_previous_value(self) -> int:
+        prediction = 0
+        for index in range(len(self.layers)):
+            prediction += self.layers[index][0] * ((-1) ** index)
+        return prediction
+
 
 class Report:
     def __init__(self, description: str) -> None:
@@ -58,10 +65,16 @@ class Report:
             histories.append(History(line))
         return histories
 
-    def sum_extrapolated_values(self) -> int:
+    def sum_extrapolated_next_values(self) -> int:
         total = 0
         for history in self.histories:
-            total += history.prediction
+            total += history.predicted_next
+        return total
+
+    def sum_extrapolated_previous_values(self) -> int:
+        total = 0
+        for history in self.histories:
+            total += history.predicted_previous
         return total
 
 
@@ -69,8 +82,8 @@ def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(9, is_official)
     report = Report(data)
-    part_1 = report.sum_extrapolated_values()
-    part_2 = 2 if data else 0
+    part_1 = report.sum_extrapolated_next_values()
+    part_2 = report.sum_extrapolated_previous_values()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(9, part_1, part_2, execution_time)
