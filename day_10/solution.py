@@ -72,15 +72,6 @@ class Grid:
                     self.start_tile.checked = True
         return tiles
 
-    def find_connected_tiles(self, tile: Tile) -> List[Tile]:
-        connected_tiles: List[Tile] = []
-        tile_names = tile.connecting_tiles
-        for name in tile_names:
-            potential_tile = self.tiles.get(name)
-            if potential_tile:
-                connected_tiles.append(potential_tile)
-        return connected_tiles if len(connected_tiles) == 2 else []
-
     def find_tiles_connected_to_start(self) -> List[Tile]:
         connected_tiles: List[Tile] = []
         north_name = self.start_tile.determine_adjacent_tile_in_direction(0, -1)
