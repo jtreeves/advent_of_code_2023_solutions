@@ -69,6 +69,7 @@ class Grid:
                 tiles[name] = new_tile
                 if character == "S":
                     self.start_tile = new_tile
+                    self.start_tile.checked = True
         return tiles
 
     def find_connected_tiles(self, tile: Tile) -> List[Tile]:
@@ -105,7 +106,7 @@ class Grid:
                 connected_names = tile.connecting_tiles
                 for name in connected_names:
                     potential_tile = self.tiles.get(name)
-                    if potential_tile and not potential_tile.checked and potential_tile.name != self.start_tile.name:
+                    if potential_tile and not potential_tile.checked:
                         next_layer.append(potential_tile)
             tiles_at_layer = next_layer
         return layer
