@@ -36,6 +36,13 @@ Total execution time: 0.009216785430908203 seconds
 -   To view solutions for all days up to and including today, omit the day positional argument: `python3 main.py`
 -   To deactivate the environment after working with this repo: `deactivate`
 
+To execute the solutions from the C files:
+
+1.  Create the executable: `gcc -o dist/main main.c`
+2.  Run the executable: `./dist/main 1`
+
+Replace the integer at the end of the executable with the day you want to view.
+
 ## Code Analysis
 
 Unlike most coding challenge approaches, this repo is written more like a library, with type annotations for documentation, and it uses a more OOP approach overall.
