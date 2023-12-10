@@ -11,7 +11,7 @@ class Tile:
         self.y = y
         self.content = content
         self.name = f"x{self.x}y{self.y}"
-        self.checked = False
+        self.included_in_loop = False
         self.distance_from_start = 0
         self.connecting_tiles = self.determine_connecting_tiles()
 
@@ -69,7 +69,7 @@ class Grid:
                 tiles[name] = new_tile
                 if character == "S":
                     self.start_tile = new_tile
-                    self.start_tile.checked = True
+                    self.start_tile.included_in_loop = True
         return tiles
 
     def find_tiles_connected_to_start(self) -> List[Tile]:
@@ -93,11 +93,11 @@ class Grid:
             next_layer: List[Tile] = []
             for tile in tiles_at_layer:
                 tile.distance_from_start = layer
-                tile.checked = True
+                tile.included_in_loop = True
                 connected_names = tile.connecting_tiles
                 for name in connected_names:
                     potential_tile = self.tiles.get(name)
-                    if potential_tile and not potential_tile.checked:
+                    if potential_tile and not potential_tile.included_in_loop:
                         next_layer.append(potential_tile)
             tiles_at_layer = next_layer
         return layer
