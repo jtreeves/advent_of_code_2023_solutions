@@ -12,7 +12,6 @@ class Tile:
         self.content = content
         self.name = f"x{self.x}y{self.y}"
         self.included_in_loop = False
-        self.checked_inside = False
         self.distance_from_start = 0
         self.connecting_tile_names = self.determine_connecting_tile_names()
 
