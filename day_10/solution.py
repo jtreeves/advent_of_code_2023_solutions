@@ -60,6 +60,20 @@ class Tile:
             connecting_tile_names = []
         return connecting_tile_names
 
+    def set_content_by_directions(self, directions: List[str]) -> None:
+        if "north" in directions and "south" in directions:
+            self.content = "|"
+        elif "east" in directions and "west" in directions:
+            self.content = "-"
+        elif "north" in directions and "east" in directions:
+            self.content = "L"
+        elif "north" in directions and "west" in directions:
+            self.content = "J"
+        elif "south" in directions and "west" in directions:
+            self.content = "7"
+        elif "south" in directions and "east" in directions:
+            self.content = "F"
+
 
 class Maze:
     def __init__(self, description: str) -> None:
@@ -98,18 +112,7 @@ class Maze:
             if potential_tile and self.start_tile.name in potential_tile.connecting_tile_names:
                 connected_tiles.append(potential_tile)
                 directional_keys.append(k)
-        if "north" in directional_keys and "south" in directional_keys:
-            self.start_tile.content = "|"
-        elif "east" in directional_keys and "west" in directional_keys:
-            self.start_tile.content = "-"
-        elif "north" in directional_keys and "east" in directional_keys:
-            self.start_tile.content = "L"
-        elif "north" in directional_keys and "west" in directional_keys:
-            self.start_tile.content = "J"
-        elif "south" in directional_keys and "west" in directional_keys:
-            self.start_tile.content = "7"
-        elif "south" in directional_keys and "east" in directional_keys:
-            self.start_tile.content = "F"
+        self.start_tile.set_content_by_directions(directional_keys)
         return connected_tiles
 
     def traverse_loop(self) -> int:
