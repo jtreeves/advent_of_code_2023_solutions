@@ -222,4 +222,4 @@ Figure out whether you have time to search for the nest by calculating the area 
 
 ### Solution
 
-NOT YET SOLVED
+495

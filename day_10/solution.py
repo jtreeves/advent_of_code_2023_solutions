@@ -19,18 +19,6 @@ class Tile:
     def __repr__(self) -> str:
         return f"({self.x}, {self.y}): {self.content}"
 
-    def has_identical_x(self, other: object) -> bool:
-        if isinstance(other, Tile):
-            return self.x == other.x
-        else:
-            return False
-
-    def has_identical_y(self, other: object) -> bool:
-        if isinstance(other, Tile):
-            return self.y == other.y
-        else:
-            return False
-
     def determine_adjacent_tile_name_in_direction(self, x_change: int, y_change: int) -> str:
         new_x = self.x + x_change
         new_y = self.y + y_change
@@ -141,103 +129,11 @@ class Maze:
             tiles_at_layer = next_layer
         return layer
 
-    def find_all_tiles_not_in_loop(self) -> List[Tile]:
-        tiles_not_in_loop: List[Tile] = []
-        for tile in self.tiles.values():
-            if not tile.included_in_loop:
-                tiles_not_in_loop.append(tile)
-        return tiles_not_in_loop
-
-    def determine_all_adjacent_tile_names_and_bind(self, initial_tile: Tile) -> List[dict[str, str]]:
-        bound_adjacent_tile_names: List[dict[str, str]] = []
-        adjacent_names = initial_tile.determine_all_adjacent_tile_names()
-        for name in adjacent_names.values():
-            bound_adjacent_tile_names.append({
-                "name": name,
-                "initial_tile_name": initial_tile.name
-            })
-        return bound_adjacent_tile_names
-
-    def calculate_inside_count_for_chunk(self, initial_tile: Tile) -> int:
-        inside_count = 1
-        initial_tile.checked_inside = True
-        is_open = False
-        tile_names_to_check = self.determine_all_adjacent_tile_names_and_bind(initial_tile)
-        while len(tile_names_to_check):
-            next_tile_names_to_check: List[dict[str, str]] = []
-            for tile_name in tile_names_to_check:
-                potential_tile = self.tiles.get(tile_name["name"])
-                comparison_tile = self.tiles.get(tile_name["initial_tile_name"])
-                if potential_tile and not potential_tile.included_in_loop and not potential_tile.checked_inside:
-                    inside_count += 1
-                    potential_tile.checked_inside = True
-                    next_tile_names_to_check.extend(self.determine_all_adjacent_tile_names_and_bind(potential_tile))
-                    if potential_tile.x == 0 or potential_tile.y == 0 or potential_tile.x == self.width - 1 or potential_tile.y == self.height - 1:
-                        is_open = True
-                    if comparison_tile and self.check_if_disconnection_error(potential_tile, comparison_tile):
-                        is_open = True
-            tile_names_to_check = next_tile_names_to_check
-        return inside_count if not is_open else 0
-
-    def calculate_total_inside_count(self) -> int:
-        total_inside_count = 0
-        tiles_not_in_loop = self.find_all_tiles_not_in_loop()
-        while len(tiles_not_in_loop):
-            tile = tiles_not_in_loop.pop(0)
-            if not tile.checked_inside:
-                chunk_count = self.calculate_inside_count_for_chunk(tile)
-                total_inside_count += chunk_count
-        return total_inside_count
-
-    def check_if_disconnection_error(self, first_tile: Tile, second_tile: Tile) -> bool:
-        disconnection_error = False
-        first_tile_adjacencies = first_tile.determine_all_adjacent_tile_names()
-        second_tile_adjacencies = second_tile.determine_all_adjacent_tile_names()
-        if first_tile.x == second_tile.x:
-            first_pair = [first_tile_adjacencies["east"], second_tile_adjacencies["east"], "east"]
-            second_pair = [first_tile_adjacencies["west"], second_tile_adjacencies["west"], "west"]
-        else:
-            first_pair = [first_tile_adjacencies["north"], second_tile_adjacencies["north"], "north"]
-            second_pair = [first_tile_adjacencies["south"], second_tile_adjacencies["south"], "south"]
-        pairs = [first_pair, second_pair]
-        for pair in pairs:
-            first_tile_in_pair = self.tiles.get(pair[0])
-            second_tile_in_pair = self.tiles.get(pair[1])
-            if first_tile_in_pair and second_tile_in_pair and first_tile_in_pair.included_in_loop and second_tile_in_pair.included_in_loop and first_tile_in_pair.name not in second_tile_in_pair.connecting_tile_names:
-                direction = pair[2]
-                disconnection_error = not self.check_if_disconnected_tiles_eventually_block_off(first_tile_in_pair, second_tile_in_pair, direction)
-        return disconnection_error
-
-    def check_if_disconnected_tiles_eventually_block_off(self, first_tile: Tile, second_tile: Tile, direction: str) -> bool:
-        blocked_off = False
-        none_left_to_check = False
-        first_checked_tile = first_tile
-        second_checked_tile = second_tile
-        while not blocked_off and not none_left_to_check:
-            first_name_adjacency = first_checked_tile.determine_all_adjacent_tile_names()[direction]
-            second_name_adjacency = second_checked_tile.determine_all_adjacent_tile_names()[direction]
-            first_tile_adjacency = self.tiles.get(first_name_adjacency)
-            second_tile_adjacency = self.tiles.get(second_name_adjacency)
-            if not first_tile_adjacency or not second_tile_adjacency:
-                none_left_to_check = True
-            else:
-                if not first_tile_adjacency.included_in_loop or not second_tile_adjacency.included_in_loop:
-                    none_left_to_check = True
-                else:
-                    if first_tile_adjacency.name in second_tile_adjacency.connecting_tile_names:
-                        blocked_off = True
-                    else:
-                        first_checked_tile = first_tile_adjacency
-                        second_checked_tile = second_tile_adjacency
-        return blocked_off
-
     def traverse_maze_for_inside_count(self) -> int:
         inside_count = 0
         for row in range(self.height):
-            end_loop_tiles_row = self.find_end_loop_tiles_for_row(row)
             crossed_loop_count = 0
             for column in range(self.width):
-                end_loop_tiles_column = self.find_end_loop_tiles_for_column(column)
                 name = f"x{column}y{row}"
                 tile = self.tiles.get(name)
                 if tile:
@@ -245,23 +141,9 @@ class Maze:
                         if tile.content == "|" or tile.content == "J" or tile.content == "L":
                             crossed_loop_count += 1
                     else:
-                        if crossed_loop_count % 2 == 1 and tile.x > end_loop_tiles_row[0].x and tile.x < end_loop_tiles_row[-1].x and tile.y > end_loop_tiles_column[0].y and tile.y < end_loop_tiles_column[-1].y:
+                        if crossed_loop_count % 2 == 1:
                             inside_count += 1
         return inside_count
-
-    def find_end_loop_tiles_for_row(self, row: int) -> List[Tile]:
-        row_tiles = sorted((value for value in self.tiles.values() if value.y == row and value.included_in_loop), key=lambda x: x.x)
-        if row_tiles:
-            return [row_tiles[0], row_tiles[-1]]
-        else:
-            return []
-
-    def find_end_loop_tiles_for_column(self, column: int) -> List[Tile]:
-        column_tiles = sorted((value for value in self.tiles.values() if value.x == column and value.included_in_loop), key=lambda y: y.y)
-        if column_tiles:
-            return [column_tiles[0], column_tiles[-1]]
-        else:
-            return []
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
