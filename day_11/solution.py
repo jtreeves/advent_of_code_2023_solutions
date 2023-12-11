@@ -10,103 +10,107 @@ class Galaxy:
         self.x = x
         self.y = y
 
-    def __repr__(self) -> str:
-        return f"({self.x}, {self.y})"
 
-    def calculate_distance(self, other: object) -> int:
-        if isinstance(other, Galaxy):
-            distance = abs(self.x - other.x) + abs(self.y - other.y)
-        else:
-            distance = 0
+class GalaxyPair:
+    def __init__(self, first_galaxy: Galaxy, second_galaxy: Galaxy, horizontal_gaps: List[int], vertical_gaps: List[int], expansion_factor: int) -> None:
+        self.first_galaxy = first_galaxy
+        self.second_galaxy = second_galaxy
+        self.horizontal_gaps = horizontal_gaps
+        self.vertical_gaps = vertical_gaps
+        self.expansion_factor = expansion_factor
+        self.distance = self.calculate_expanded_distance()
+
+    def calculate_initial_distance(self) -> int:
+        horizontal_change = abs(self.first_galaxy.x - self.second_galaxy.x)
+        vertical_change = abs(self.first_galaxy.y - self.second_galaxy.y)
+        distance = horizontal_change + vertical_change
+        return distance
+
+    def determine_gaps_along_dimension(self, is_vertical: bool) -> int:
+        known_gaps = self.vertical_gaps if is_vertical else self.horizontal_gaps
+        endpoints = sorted([self.first_galaxy.y, self.second_galaxy.y]) if is_vertical else sorted([self.first_galaxy.x, self.second_galaxy.x])
+        gaps_between_endpoints = 0
+        for gap in known_gaps:
+            if gap in range(*endpoints):
+                gaps_between_endpoints += 1
+        return gaps_between_endpoints
+
+    def determine_vertical_gaps(self) -> int:
+        return self.determine_gaps_along_dimension(True)
+
+    def determine_horizontal_gaps(self) -> int:
+        return self.determine_gaps_along_dimension(False)
+
+    def determine_total_gaps(self) -> int:
+        return self.determine_vertical_gaps() + self.determine_horizontal_gaps()
+
+    def calculate_expanded_distance(self) -> int:
+        initial_distance = self.calculate_initial_distance()
+        total_gaps = self.determine_total_gaps()
+        distance = initial_distance + total_gaps * (self.expansion_factor - 1)
         return distance
 
 
 class Image:
     def __init__(self, description: str) -> None:
-        self.initial_rows = get_list_of_lines(description)
-        self.initial_height = self.calculate_initial_height()
-        self.initial_width = self.calculate_initial_width()
-        self.initial_columns = self.create_initial_columns()
-        self.expand_universe()
+        self.rows = get_list_of_lines(description)
+        self.height = self.calculate_initial_height()
+        self.width = self.calculate_initial_width()
+        self.columns = self.create_initial_columns()
+        self.empty_rows = self.determine_rows_without_galaxies()
+        self.empty_columns = self.determine_columns_without_galaxies()
+        self.galaxies = self.create_galaxies()
 
     def calculate_initial_height(self) -> int:
-        return len(self.initial_rows)
+        return len(self.rows)
 
     def calculate_initial_width(self) -> int:
-        return len(self.initial_rows[0])
+        return len(self.rows[0])
 
     def create_initial_columns(self) -> List[str]:
         columns: List[str] = []
-        for column in range(self.initial_width):
+        for column in range(self.width):
             column_values = ""
-            for row in self.initial_rows:
+            for row in self.rows:
                 column_values += row[column]
             columns.append(column_values)
         return columns
 
-    def expand_universe(self) -> None:
-        new_rows = self.create_new_rows()
+    def create_galaxies(self) -> List[Galaxy]:
         galaxies: List[Galaxy] = []
-        for row in range(len(new_rows)):
-            for column in range(len(new_rows[0])):
-                character = new_rows[row][column]
+        for row in range(self.height):
+            for column in range(self.width):
+                character = self.rows[row][column]
                 if character == "#":
-                    new_galaxy = Galaxy(column, row)
-                    galaxies.append(new_galaxy)
-        self.galaxies = galaxies
+                    galaxies.append(Galaxy(column, row))
+        return galaxies
 
     def determine_rows_without_galaxies(self) -> List[int]:
-        return self.determine_elements_without_galaxies(self.initial_rows)
+        return self.determine_elements_without_galaxies(self.rows)
 
     def determine_columns_without_galaxies(self) -> List[int]:
-        return self.determine_elements_without_galaxies(self.initial_columns)
+        return self.determine_elements_without_galaxies(self.columns)
 
     def determine_elements_without_galaxies(self, elements: List[str]) -> List[int]:
         elements_without_galaxies: List[int] = []
         for element_index in range(len(elements)):
             if "#" not in elements[element_index]:
-                elements_without_galaxies.append(element_index + 1 + len(elements_without_galaxies))
+                elements_without_galaxies.append(element_index)
         return elements_without_galaxies
 
-    def create_new_rows(self) -> List[str]:
-        rows_without_galaxies = self.determine_rows_without_galaxies()
-        columns_without_galaxies = self.determine_columns_without_galaxies()
-        new_width = self.initial_width + len(columns_without_galaxies)
-        new_rows: List[str] = []
-        for old_row_index in range(self.initial_height):
-            new_row = ""
-            new_column_index = 0
-            empty_columns_tracked = 0
-            while new_column_index < new_width:
-                if new_column_index in columns_without_galaxies:
-                    new_row += "."
-                    empty_columns_tracked += 1
-                else:
-                    new_row += self.initial_rows[old_row_index][new_column_index - empty_columns_tracked]
-                new_column_index += 1
-            new_rows.append(new_row)
-        full_empty_row = ""
-        empty_row_index = 0
-        while empty_row_index < new_width:
-            full_empty_row += "."
-            empty_row_index += 1
-        for empty_row in rows_without_galaxies:
-            new_rows.insert(empty_row, full_empty_row)
-        return new_rows
-
-    def find_minimal_distances_between_all_galaxy_pairs(self) -> List[int]:
+    def find_distances_between_galaxy_pairs_with_expansion(self, expansion_factor: int) -> List[int]:
         minimal_distances: List[int] = []
         for index in range(len(self.galaxies)):
             matching_index = index + 1
             while matching_index < len(self.galaxies):
-                distance = self.galaxies[index].calculate_distance(self.galaxies[matching_index])
+                distance = GalaxyPair(self.galaxies[index], self.galaxies[matching_index], self.empty_columns, self.empty_rows, expansion_factor).distance
                 minimal_distances.append(distance)
                 matching_index += 1
         return minimal_distances
 
-    def calculate_total_minimal_distances(self) -> int:
+    def calculate_total_distances_with_expansion(self, expansion_factor: int) -> int:
         total_minimal_distances = 0
-        minimal_distances = self.find_minimal_distances_between_all_galaxy_pairs()
+        minimal_distances = self.find_distances_between_galaxy_pairs_with_expansion(expansion_factor)
         for distance in minimal_distances:
             total_minimal_distances += distance
         return total_minimal_distances
@@ -116,8 +120,8 @@ def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(11, is_official)
     image = Image(data)
-    part_1 = image.calculate_total_minimal_distances()
-    part_2 = 2 if data else 0
+    part_1 = image.calculate_total_distances_with_expansion(2)
+    part_2 = image.calculate_total_distances_with_expansion(1000000)
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(11, part_1, part_2, execution_time)
