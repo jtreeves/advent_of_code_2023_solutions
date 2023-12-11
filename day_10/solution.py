@@ -73,14 +73,14 @@ class Tile:
         return connecting_tile_names
 
 
-class Grid:
+class Maze:
     def __init__(self, description: str) -> None:
         self.rows = get_list_of_lines(description)
         self.height = self.calculate_height()
         self.width = self.calculate_width()
         self.tiles = self.create_tiles()
         self.maximum_distance_from_start = self.traverse_loop()
-        self.total_inside_count = self.calculate_total_inside_count()
+        self.total_inside_count = self.traverse_maze_for_inside_count()
 
     def calculate_height(self) -> int:
         return len(self.rows)
@@ -104,10 +104,24 @@ class Grid:
     def find_tiles_connected_to_start(self) -> List[Tile]:
         connected_tiles: List[Tile] = []
         adjacent_names = self.start_tile.determine_all_adjacent_tile_names()
-        for name in adjacent_names.values():
-            potential_tile = self.tiles.get(name)
+        directional_keys: List[str] = []
+        for [k, v] in adjacent_names.items():
+            potential_tile = self.tiles.get(v)
             if potential_tile and self.start_tile.name in potential_tile.connecting_tile_names:
                 connected_tiles.append(potential_tile)
+                directional_keys.append(k)
+        if "north" in directional_keys and "south" in directional_keys:
+            self.start_tile.content = "|"
+        elif "east" in directional_keys and "west" in directional_keys:
+            self.start_tile.content = "-"
+        elif "north" in directional_keys and "east" in directional_keys:
+            self.start_tile.content = "L"
+        elif "north" in directional_keys and "west" in directional_keys:
+            self.start_tile.content = "J"
+        elif "south" in directional_keys and "west" in directional_keys:
+            self.start_tile.content = "7"
+        elif "south" in directional_keys and "east" in directional_keys:
+            self.start_tile.content = "F"
         return connected_tiles
 
     def traverse_loop(self) -> int:
@@ -217,15 +231,45 @@ class Grid:
                         second_checked_tile = second_tile_adjacency
         return blocked_off
 
+    def traverse_maze_for_inside_count(self) -> int:
+        inside_count = 0
+        for row in range(self.height):
+            end_loop_tiles_row = self.find_end_loop_tiles_for_row(row)
+            crossed_loop_count = 0
+            for column in range(self.width):
+                end_loop_tiles_column = self.find_end_loop_tiles_for_column(column)
+                name = f"x{column}y{row}"
+                tile = self.tiles.get(name)
+                if tile:
+                    if tile.included_in_loop:
+                        if tile.content == "|" or tile.content == "J" or tile.content == "L":
+                            crossed_loop_count += 1
+                    else:
+                        if crossed_loop_count % 2 == 1 and tile.x > end_loop_tiles_row[0].x and tile.x < end_loop_tiles_row[-1].x and tile.y > end_loop_tiles_column[0].y and tile.y < end_loop_tiles_column[-1].y:
+                            inside_count += 1
+        return inside_count
+
+    def find_end_loop_tiles_for_row(self, row: int) -> List[Tile]:
+        row_tiles = sorted((value for value in self.tiles.values() if value.y == row and value.included_in_loop), key=lambda x: x.x)
+        if row_tiles:
+            return [row_tiles[0], row_tiles[-1]]
+        else:
+            return []
+
+    def find_end_loop_tiles_for_column(self, column: int) -> List[Tile]:
+        column_tiles = sorted((value for value in self.tiles.values() if value.x == column and value.included_in_loop), key=lambda y: y.y)
+        if column_tiles:
+            return [column_tiles[0], column_tiles[-1]]
+        else:
+            return []
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(10, is_official)
-    grid = Grid(data)
-    print("TILE COUNT:", len(grid.tiles))
-    print("TILES NOT IN LOOP COUNT:", len(grid.find_all_tiles_not_in_loop()))
-    part_1 = grid.maximum_distance_from_start
-    part_2 = grid.total_inside_count
+    maze = Maze(data)
+    part_1 = maze.maximum_distance_from_start
+    part_2 = maze.total_inside_count
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(10, part_1, part_2, execution_time)
