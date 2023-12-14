@@ -10,6 +10,9 @@ class Pattern:
         self.rows = self.determine_rows()
         self.columns = self.determine_columns()
 
+    def __repr__(self) -> str:
+        return self.notes
+
     def determine_rows(self) -> List[str]:
         rows = self.notes.split("\n")
         return rows
@@ -23,9 +26,9 @@ class Pattern:
         horizontal = self.find_horizontal_line_of_symmetry()
         vertical = self.find_vertical_line_of_symmetry()
         if horizontal != 0:
-            value_of_symmetry = 100 * (horizontal + 1)
+            value_of_symmetry = 100 * horizontal
         else:
-            value_of_symmetry = vertical + 1
+            value_of_symmetry = vertical
         return value_of_symmetry
 
     def find_horizontal_line_of_symmetry(self) -> int:
@@ -47,13 +50,13 @@ class Pattern:
         potential_indices_of_symmetry: List[int] = []
         for index in range(len(dimension) - 1):
             if dimension[index] == dimension[index + 1]:
-                potential_indices_of_symmetry.append(index)
+                potential_indices_of_symmetry.append(index + 1)
         return potential_indices_of_symmetry
 
     def check_if_fully_symmetric(self, potential_index: int, dimension: List[str]) -> bool:
         fully_symmetric = True
-        preceding_index = potential_index - 1
-        succeeding_index = potential_index + 2
+        preceding_index = potential_index - 2
+        succeeding_index = potential_index + 1
         while fully_symmetric and preceding_index >= 0 and succeeding_index < len(dimension):
             if dimension[preceding_index] != dimension[succeeding_index]:
                 fully_symmetric = False

@@ -74,7 +74,7 @@ Find the line of reflection in each of the patterns in your notes. What number d
 
 ### Solution
 
-NOT YET SOLVED
+37975
 
 ## Part Two
 
