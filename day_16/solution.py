@@ -1,4 +1,5 @@
 import time
+from typing import List
 from utils.get_list_of_lines import get_list_of_lines
 from utils.extract_data_from_file import extract_data_from_file
 from utils.SolutionResults import SolutionResults
@@ -88,21 +89,42 @@ class Contraption:
             else:
                 beam.active = False
 
-    def count_energized_tiles(self) -> int:
-        self.fire_beam(0, 0, True, True)
+    def count_energized_tiles_for_configuration(self, x: int, y: int, horizontal: bool, increasing: bool) -> int:
+        self.fire_beam(x, y, horizontal, increasing)
         count = 0
         for tile in self.tiles.values():
             if tile.energized:
                 count += 1
+        self.reset_energized_values()
         return count
+
+    def reset_energized_values(self) -> None:
+        for tile in self.tiles.values():
+            tile.energized = False
+            tile.beams_tracker = {
+                ">": 0,
+                "<": 0,
+                "^": 0,
+                "v": 0
+            }
+
+    def maximize_energized_tiles(self) -> int:
+        configuration_counts: List[int] = []
+        for column in range(self.width):
+            configuration_counts.append(self.count_energized_tiles_for_configuration(column, 0, False, True))
+            configuration_counts.append(self.count_energized_tiles_for_configuration(column, self.height - 1, False, False))
+        for row in range(self.height):
+            configuration_counts.append(self.count_energized_tiles_for_configuration(0, row, True, True))
+            configuration_counts.append(self.count_energized_tiles_for_configuration(self.width - 1, row, True, False))
+        return sorted(configuration_counts)[-1]
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(16, is_official)
     grid = Contraption(data)
-    part_1 = grid.count_energized_tiles()
-    part_2 = 2 if data else 0
+    part_1 = grid.count_energized_tiles_for_configuration(0, 0, True, True)
+    part_2 = grid.maximize_energized_tiles()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(16, part_1, part_2, execution_time)
