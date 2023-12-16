@@ -10,9 +10,6 @@ class Pattern:
         self.rows = self.determine_rows()
         self.columns = self.determine_columns()
 
-    def __repr__(self) -> str:
-        return self.notes
-
     def determine_rows(self) -> List[str]:
         rows = self.notes.split("\n")
         return rows
@@ -22,48 +19,42 @@ class Pattern:
         columns = [''.join(column) for column in raw_columns]
         return columns
 
-    def calculate_value_of_symmetry(self) -> int:
-        horizontal = self.find_horizontal_line_of_symmetry()
-        vertical = self.find_vertical_line_of_symmetry()
+    def calculate_value_of_symmetry(self, required_differences: int) -> int:
+        horizontal = self.find_horizontal_line_of_symmetry(required_differences)
+        vertical = self.find_vertical_line_of_symmetry(required_differences)
         if horizontal != 0:
             value_of_symmetry = 100 * horizontal
         else:
             value_of_symmetry = vertical
         return value_of_symmetry
 
-    def find_horizontal_line_of_symmetry(self) -> int:
-        return self.find_line_of_symmetry(self.rows)
+    def find_horizontal_line_of_symmetry(self, required_differences: int) -> int:
+        return self.find_line_of_symmetry_with_differences(self.rows, required_differences)
 
-    def find_vertical_line_of_symmetry(self) -> int:
-        return self.find_line_of_symmetry(self.columns)
+    def find_vertical_line_of_symmetry(self, required_differences: int) -> int:
+        return self.find_line_of_symmetry_with_differences(self.columns, required_differences)
 
-    def find_line_of_symmetry(self, dimension: List[str]) -> int:
+    def find_line_of_symmetry_with_differences(self, dimension: List[str], required_differences: int) -> int:
         line_index = 0
-        potential_indices_of_symmetry = self.find_potential_indices_of_symmetry(dimension)
-        for index in potential_indices_of_symmetry:
-            fully_symmetric = self.check_if_fully_symmetric(index, dimension)
-            if fully_symmetric:
-                line_index = index
-        return line_index
-
-    def find_potential_indices_of_symmetry(self, dimension: List[str]) -> List[int]:
-        potential_indices_of_symmetry: List[int] = []
-        for index in range(len(dimension) - 1):
-            if dimension[index] == dimension[index + 1]:
-                potential_indices_of_symmetry.append(index + 1)
-        return potential_indices_of_symmetry
-
-    def check_if_fully_symmetric(self, potential_index: int, dimension: List[str]) -> bool:
-        fully_symmetric = True
-        preceding_index = potential_index - 2
-        succeeding_index = potential_index + 1
-        while fully_symmetric and preceding_index >= 0 and succeeding_index < len(dimension):
-            if dimension[preceding_index] != dimension[succeeding_index]:
-                fully_symmetric = False
-            else:
+        current_index = 0
+        symmetry_found = False
+        while current_index < len(dimension) - 1 and not symmetry_found:
+            differences = 0
+            preceding_index = current_index
+            succeeding_index = current_index + 1
+            while preceding_index >= 0 and succeeding_index < len(dimension) and differences <= required_differences:
+                inner_index = 0
+                while inner_index < len(dimension[preceding_index]) and differences <= required_differences:
+                    if dimension[preceding_index][inner_index] != dimension[succeeding_index][inner_index]:
+                        differences += 1
+                    inner_index += 1
                 preceding_index -= 1
                 succeeding_index += 1
-        return fully_symmetric
+            current_index += 1
+            if differences == required_differences:
+                line_index = current_index
+                symmetry_found = True
+        return line_index
 
 
 class Collection:
@@ -79,10 +70,10 @@ class Collection:
             patterns.append(pattern)
         return patterns
 
-    def calculate_total_values_of_symmetry(self) -> int:
+    def calculate_total_values_of_symmetry(self, required_differences: int) -> int:
         total = 0
         for pattern in self.patterns:
-            total += pattern.calculate_value_of_symmetry()
+            total += pattern.calculate_value_of_symmetry(required_differences)
         return total
 
 
@@ -90,8 +81,8 @@ def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(13, is_official)
     collection = Collection(data)
-    part_1 = collection.calculate_total_values_of_symmetry()
-    part_2 = 2 if data else 0
+    part_1 = collection.calculate_total_values_of_symmetry(0)
+    part_2 = collection.calculate_total_values_of_symmetry(1)
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(13, part_1, part_2, execution_time)

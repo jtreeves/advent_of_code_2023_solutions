@@ -140,4 +140,4 @@ In each pattern, fix the smudge and find the different line of reflection. What 
 
 ### Solution
 
-NOT YET SOLVED
+32497
