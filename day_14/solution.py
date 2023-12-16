@@ -6,97 +6,60 @@ from utils.SolutionResults import SolutionResults
 
 
 def tilt_north(rows: List[str]) -> List[str]:
-    columns = [''.join(column) + "#" for column in [list(reversed(x)) for x in zip(*rows)]]
-    final_columns: List[str] = []
-    for column in columns:
-        last_cube = 0
-        cube = column.find("#")
-        final_column = ""
-        while cube > -1:
-            sub_column = column[last_cube:cube]
-            spheres = sub_column.count("O")
-            empties = sub_column.count(".")
-            for _ in range(empties):
-                final_column += "."
-            for _ in range(spheres):
-                final_column += "O"
-            last_cube = cube
-            cube = column.find("#", cube + 1)
-            if len(final_column) < len(column) - 1:
-                final_column += "#"
-        final_columns.append(final_column)
-    final_rows = list(reversed([''.join(row) for row in [list(x) for x in zip(*final_columns)]]))
-    return final_rows
+    return tilt_vertically(rows, True)
 
 
 def tilt_south(rows: List[str]) -> List[str]:
+    return tilt_vertically(rows, False)
+
+
+def tilt_west(rows: List[str]) -> List[str]:
+    return tilt_horizontally(rows, False)
+
+
+def tilt_east(rows: List[str]) -> List[str]:
+    return tilt_horizontally(rows, True)
+
+
+def tilt_vertically(rows: List[str], increasing: bool) -> List[str]:
     columns = [''.join(column) + "#" for column in [list(reversed(x)) for x in zip(*rows)]]
-    final_columns: List[str] = []
-    for column in columns:
-        last_cube = 0
-        cube = column.find("#")
-        final_column = ""
-        while cube > -1:
-            sub_column = column[last_cube:cube]
-            spheres = sub_column.count("O")
-            empties = sub_column.count(".")
-            for _ in range(spheres):
-                final_column += "O"
-            for _ in range(empties):
-                final_column += "."
-            last_cube = cube
-            cube = column.find("#", cube + 1)
-            if len(final_column) < len(column) - 1:
-                final_column += "#"
-        final_columns.append(final_column)
+    final_columns = tilt_in_direction(columns, increasing)
     final_rows = list(reversed([''.join(row) for row in [list(x) for x in zip(*final_columns)]]))
     return final_rows
 
 
-def tilt_west(rows: List[str]) -> List[str]:
+def tilt_horizontally(rows: List[str], increasing: bool) -> List[str]:
     reversed_rows = [row + "#" for row in rows[::-1]]
-    final_rows: List[str] = []
-    for row in reversed_rows:
-        last_cube = 0
-        cube = row.find("#")
-        final_row = ""
-        while cube > -1:
-            sub_column = row[last_cube:cube]
-            spheres = sub_column.count("O")
-            empties = sub_column.count(".")
-            for _ in range(spheres):
-                final_row += "O"
-            for _ in range(empties):
-                final_row += "."
-            last_cube = cube
-            cube = row.find("#", cube + 1)
-            if len(final_row) < len(row) - 1:
-                final_row += "#"
-        final_rows.append(final_row)
+    final_rows = tilt_in_direction(reversed_rows, increasing)
     return final_rows[::-1]
 
 
-def tilt_east(rows: List[str]) -> List[str]:
-    reversed_rows = [row + "#" for row in rows[::-1]]
-    final_rows: List[str] = []
-    for row in reversed_rows:
+def tilt_in_direction(vectors: List[str], increasing: bool) -> List[str]:
+    final_vectors: List[str] = []
+    for vector in vectors:
         last_cube = 0
-        cube = row.find("#")
-        final_row = ""
+        cube = vector.find("#")
+        final_vector = ""
         while cube > -1:
-            sub_column = row[last_cube:cube]
+            sub_column = vector[last_cube:cube]
             spheres = sub_column.count("O")
             empties = sub_column.count(".")
-            for _ in range(empties):
-                final_row += "."
-            for _ in range(spheres):
-                final_row += "O"
+            if increasing:
+                for _ in range(empties):
+                    final_vector += "."
+                for _ in range(spheres):
+                    final_vector += "O"
+            else:
+                for _ in range(spheres):
+                    final_vector += "O"
+                for _ in range(empties):
+                    final_vector += "."
             last_cube = cube
-            cube = row.find("#", cube + 1)
-            if len(final_row) < len(row) - 1:
-                final_row += "#"
-        final_rows.append(final_row)
-    return final_rows[::-1]
+            cube = vector.find("#", cube + 1)
+            if len(final_vector) < len(vector) - 1:
+                final_vector += "#"
+        final_vectors.append(final_vector)
+    return final_vectors
 
 
 def spin_cycle(rows: List[str]) -> List[str]:
@@ -155,8 +118,8 @@ def find_pattern(integers: List[int]) -> dict[str, int]:
                     repeated_pattern = pattern * 2
                     repeated_length = len(repeated_pattern)
                     repeated_is_subset = False
-                    for j in range(original_length - repeated_length + 1):
-                        if integers[j:j + repeated_length] == repeated_pattern:
+                    for i in range(original_length - repeated_length + 1):
+                        if integers[i:i + repeated_length] == repeated_pattern:
                             repeated_is_subset = True
                     if repeated_is_subset:
                         start_index = start
