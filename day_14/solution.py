@@ -84,7 +84,7 @@ def calculate_north_load_after_multiple_spin_cycles(rows: List[str], cycles: int
     current_cycle = 0
     pattern_length = -1
     start_index = -1
-    minimum_pattern_length = 3
+    minimum_pattern_length = 2
     while current_cycle < cycles and pattern_length < minimum_pattern_length:
         final_rows = spin_cycle(final_rows)
         loads.append(calculate_north_load(final_rows))
@@ -104,31 +104,26 @@ def calculate_north_load_after_multiple_spin_cycles(rows: List[str], cycles: int
 
 def find_pattern(integers: List[int]) -> dict[str, int]:
     original_length = len(integers)
-    current_index = 1
-    start_index = -1
-    pattern_length = -1
-    minimum_pattern_length = 3
-    while current_index < original_length and pattern_length < minimum_pattern_length:
-        start = 0
-        while start < current_index and pattern_length < minimum_pattern_length:
-            end = start
-            while end < start + current_index and pattern_length < minimum_pattern_length:
-                if original_length % current_index == 0:
-                    pattern = integers[start:end]
-                    repeated_pattern = pattern * 2
-                    repeated_length = len(repeated_pattern)
-                    repeated_is_subset = False
-                    for i in range(original_length - repeated_length + 1):
-                        if integers[i:i + repeated_length] == repeated_pattern:
-                            repeated_is_subset = True
-                    if repeated_is_subset:
-                        start_index = start
-                        pattern_length = len(pattern)
-                end += 1
-            start += 1
-        current_index += 1
+    start = 1
+    pattern_length = 0
+    minimum_pattern_length = 2
+    while start < original_length and pattern_length < minimum_pattern_length:
+        end = start + 1
+        while end < original_length and pattern_length < minimum_pattern_length:
+            pattern = integers[start:end]
+            repeated_pattern = pattern * 2
+            repeated_length = len(repeated_pattern)
+            repeated_is_subset = False
+            for i in range(original_length - repeated_length + 1):
+                if integers[i:i + repeated_length] == repeated_pattern:
+                    repeated_is_subset = True
+                    break
+            if repeated_is_subset:
+                pattern_length = len(pattern)
+            end += 1
+        start += 1
     return {
-        "start_index": start_index,
+        "start_index": start,
         "pattern_length": pattern_length
     }
 
