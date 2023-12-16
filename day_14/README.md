@@ -125,4 +125,4 @@ Run the spin cycle for 1000000000 cycles. Afterward, what is the total load on t
 
 ### Solution
 
-NOT YET SOLVED
+104533
