@@ -5,11 +5,26 @@ from utils.extract_data_from_file import extract_data_from_file
 from utils.SolutionResults import SolutionResults
 
 
+class PotentialScenario:
+    def __init__(self, start: str, unknown_damaged: int = 0, unknown_operational: int = 0) -> None:
+        self.scenario = start
+        self.unknown_damaged = unknown_damaged
+        self.unknown_operational = unknown_operational
+
+    def __repr__(self) -> str:
+        return f"{self.scenario}"
+
+
 class ConditionsRecord:
     def __init__(self, record_description: str) -> None:
         versions = record_description.split(" ")
         self.original_conditions = versions[0]
         self.contiguous_groups = self.determine_contiguous_groups(versions[1])
+        self.length = len(self.original_conditions)
+        self.total_damaged = self.determine_total_damaged()
+        self.total_operational = self.length - self.total_damaged
+        self.unknown_damaged = self.total_damaged - self.original_conditions.count("#")
+        self.unknown_operational = self.total_operational - self.original_conditions.count(".")
 
     def determine_contiguous_groups(self, notes: str) -> List[int]:
         groups = notes.split(",")
@@ -18,78 +33,66 @@ class ConditionsRecord:
             contiguous_groups.append(int(group))
         return contiguous_groups
 
+    def determine_total_damaged(self) -> int:
+        damaged = 0
+        for group in self.contiguous_groups:
+            damaged += group
+        return damaged
+
     def count_acceptable_arrangements(self) -> int:
-        acceptable_arrangements = 1
-        possible_beginnings: List[str] = []
-        next_unknown_index = self.find_next_unknown_condition(0)
-        if next_unknown_index != -1:
-            set_subsection = self.original_conditions[0:next_unknown_index]
-            first_possibility = set_subsection + "#"
-            second_possibility = set_subsection + "."
-            possibilities = [first_possibility, second_possibility]
-            print('INITIAL POSSIBILITIES:', possibilities)
-            for possibility in possibilities:
-                meets_criteria = self.check_if_meets_criteria(possibility)
-                if meets_criteria:
-                    possible_beginnings.append(possibility)
-        while len(possible_beginnings) != 0:
-            possible_beginning = possible_beginnings.pop()
-            print('POSSIBLE BEGINNING:', possible_beginning)
-            current_index = len(possible_beginning)
+        acceptable_arrangements = 0
+        possible_scenarios: List[PotentialScenario] = [PotentialScenario("")]
+        while len(possible_scenarios) != 0:
+            possibility = possible_scenarios.pop()
+            current_index = len(possibility.scenario)
             next_unknown_index = self.find_next_unknown_condition(current_index)
             if next_unknown_index != -1:
-                set_subsection = possible_beginning + self.original_conditions[current_index:next_unknown_index]
-                first_possibility = set_subsection + "#"
-                second_possibility = set_subsection + "."
-                possibilities = [first_possibility, second_possibility]
-                for possibility in possibilities:
-                    meets_criteria = self.check_if_meets_criteria(possibility)
-                    if meets_criteria:
-                        possible_beginnings.append(possibility)
+                set_subsection = possibility.scenario + self.original_conditions[current_index:next_unknown_index]
+                damaged_possibility = PotentialScenario(set_subsection + "#", possibility.unknown_damaged + 1, possibility.unknown_operational)
+                operational_possibility = PotentialScenario(set_subsection + ".", possibility.unknown_damaged, possibility.unknown_operational + 1)
+                new_possibilities = [damaged_possibility, operational_possibility]
+                for new_possibility in new_possibilities:
+                    if new_possibility.unknown_damaged <= self.unknown_damaged and new_possibility.unknown_operational <= self.unknown_operational and not self.check_if_scenario_violates_pattern(new_possibility.scenario):
+                        possible_scenarios.append(new_possibility)
             else:
-                acceptable_arrangements += 1
+                full_scenario = possibility.scenario + self.original_conditions[current_index:]
+                if not self.check_if_scenario_violates_pattern(full_scenario):
+                    acceptable_arrangements += 1
         return acceptable_arrangements
 
     def find_next_unknown_condition(self, start_index: int) -> int:
         next_index = self.original_conditions.find("?", start_index)
         return next_index
 
-    def find_next_damaged_group(self, possible_description: str, start_index: int) -> dict[str, int]:
-        print('INSIDE FIND NEXT DAMAGED GROUP')
-        print('START INDEX:', start_index)
-        next_damaged_index = possible_description.find("#", start_index)
-        next_unknown_index = possible_description.find("?", start_index)
-        least_starting_index = next_damaged_index if next_damaged_index < next_unknown_index else next_unknown_index
-        later_operational_index = possible_description.find(".", least_starting_index)
-        later_unknown_index = possible_description.find("?", least_starting_index)
-        least_ending_index = later_operational_index if later_operational_index < later_unknown_index else later_unknown_index
-        damaged_group_length = least_ending_index - least_starting_index if least_ending_index != least_starting_index else 1
-        damaged_group = {
-            "length": damaged_group_length,
-            "end_index": least_ending_index
-        }
-        return damaged_group
-
-    def check_if_meets_criteria(self, possible_beginning: str) -> bool:
-        print('*** BEGIN NEW CHECK')
-        meets_criteria = True
-        possible_description = possible_beginning + self.original_conditions[len(possible_beginning):]
-        print('DESCRIPTION TO CHECK:', possible_description)
-        description_index_to_check = 0
-        group_index_to_check = 0
-        while meets_criteria and description_index_to_check < len(self.original_conditions) and group_index_to_check < len(self.contiguous_groups):
-            next_damaged_group = self.find_next_damaged_group(possible_description, description_index_to_check)
-            print('NEXT DAMAGED GROUP:', next_damaged_group)
-            print('GROUP INDEX TO CHECK:', group_index_to_check)
-            if self.contiguous_groups[group_index_to_check] < next_damaged_group["length"]:
-                meets_criteria = False
+    def find_next_damaged_group_in_scenario(self, start_index: int, scenario: str) -> dict[str, int]:
+        next_damaged_index = scenario.find("#", start_index)
+        if next_damaged_index != -1:
+            operational_index_after = scenario.find(".", next_damaged_index)
+            if operational_index_after != -1:
+                damaged_group_length = operational_index_after - next_damaged_index
             else:
-                description_index_to_check = next_damaged_group["end_index"]
-                group_index_to_check += 1
-        if group_index_to_check != len(self.contiguous_groups):
-            meets_criteria = False
-        print('MEETS CRITERIA?', meets_criteria)
-        return meets_criteria
+                damaged_group_length = len(scenario) - next_damaged_index
+        else:
+            damaged_group_length = 0
+        return {
+            "length": damaged_group_length,
+            "index": next_damaged_index
+        }
+
+    def check_if_scenario_violates_pattern(self, scenario: str) -> bool:
+        pattern_index = 0
+        searching_index = 0
+        violates_pattern = False
+        while not violates_pattern and pattern_index < len(self.contiguous_groups) and searching_index < len(scenario):
+            next_damaged_group = self.find_next_damaged_group_in_scenario(searching_index, scenario)
+            if next_damaged_group["length"] == self.contiguous_groups[pattern_index]:
+                pattern_index += 1
+                searching_index = next_damaged_group["index"] + next_damaged_group["length"]
+            elif next_damaged_group["length"] > self.contiguous_groups[pattern_index] or (next_damaged_group["length"] < self.contiguous_groups[pattern_index] and scenario[-1] == "." and next_damaged_group["index"] != -1):
+                violates_pattern = True
+            else:
+                break
+        return violates_pattern
 
 
 class RecordsCollection:
@@ -102,14 +105,19 @@ class RecordsCollection:
             records.append(ConditionsRecord(description))
         return records
 
+    def calculate_total_arrangements(self) -> int:
+        total = 0
+        for record in self.records:
+            total += record.count_acceptable_arrangements()
+        return total
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(12, is_official)
     record_descriptions = get_list_of_lines(data)
     collection = RecordsCollection(record_descriptions)
-    print('FIRST POSSIBILITIES:', collection.records[1].count_acceptable_arrangements())
-    part_1 = 1 if data else 0
+    part_1 = collection.calculate_total_arrangements()
     part_2 = 2 if data else 0
     end_time = time.time()
     execution_time = end_time - start_time
