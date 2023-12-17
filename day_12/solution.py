@@ -11,9 +11,6 @@ class PotentialScenario:
         self.unknown_damaged = unknown_damaged
         self.unknown_operational = unknown_operational
 
-    def __repr__(self) -> str:
-        return f"{self.scenario}"
-
 
 class ConditionsRecord:
     def __init__(self, record_description: str) -> None:
@@ -88,7 +85,7 @@ class ConditionsRecord:
             if next_damaged_group["length"] == self.contiguous_groups[pattern_index]:
                 pattern_index += 1
                 searching_index = next_damaged_group["index"] + next_damaged_group["length"]
-            elif next_damaged_group["length"] > self.contiguous_groups[pattern_index] or (next_damaged_group["length"] < self.contiguous_groups[pattern_index] and scenario[-1] == "." and next_damaged_group["index"] != -1):
+            elif next_damaged_group["length"] > self.contiguous_groups[pattern_index] or (next_damaged_group["length"] < self.contiguous_groups[pattern_index] and next_damaged_group["index"] != -1 and (scenario[-1] == "." or len(scenario) == len(self.original_conditions))):
                 violates_pattern = True
             else:
                 break

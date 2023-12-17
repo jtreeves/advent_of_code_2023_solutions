@@ -87,7 +87,7 @@ For each row, count all of the different arrangements of operational and broken 
 
 ### Solution
 
-NOT YET SOLVED
+7922
 
 ## Part Two
 
