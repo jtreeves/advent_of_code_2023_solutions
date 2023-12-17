@@ -95,6 +95,7 @@ class ConditionsRecord:
 class RecordsCollection:
     def __init__(self, record_descriptions: List[str]) -> None:
         self.records = self.create_records(record_descriptions)
+        self.unfolded_records = self.unfold_records(record_descriptions)
 
     def create_records(self, descriptions: List[str]) -> List[ConditionsRecord]:
         records: List[ConditionsRecord] = []
@@ -102,9 +103,35 @@ class RecordsCollection:
             records.append(ConditionsRecord(description))
         return records
 
+    def unfold_records(self, descriptions: List[str]) -> List[ConditionsRecord]:
+        records: List[ConditionsRecord] = []
+        for description in descriptions:
+            parts = description.split(" ")
+            conditions = parts[0]
+            counts = parts[1]
+            final_conditions = conditions
+            final_counts = counts
+            index = 0
+            while index < 4:
+                final_conditions += "?" + conditions
+                final_counts += "," + counts
+                index += 1
+            final_description = final_conditions + " " + final_counts
+            records.append(ConditionsRecord(final_description))
+        return records
+
     def calculate_total_arrangements(self) -> int:
         total = 0
         for record in self.records:
+            total += record.count_acceptable_arrangements()
+        return total
+
+    def calculate_total_unfolded_arrangements(self) -> int:
+        total = 0
+        index = 0
+        for record in self.unfolded_records:
+            index += 1
+            print('CURRENT ROW:', index)
             total += record.count_acceptable_arrangements()
         return total
 
@@ -115,7 +142,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     record_descriptions = get_list_of_lines(data)
     collection = RecordsCollection(record_descriptions)
     part_1 = collection.calculate_total_arrangements()
-    part_2 = 2 if data else 0
+    part_2 = collection.calculate_total_unfolded_arrangements()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(12, part_1, part_2, execution_time)
