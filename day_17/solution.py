@@ -189,3 +189,6 @@ def solve_problem(is_official: bool) -> SolutionResults:
     execution_time = end_time - start_time
     results = SolutionResults(17, part_1, part_2, execution_time)
     return results
+
+# DFS with minimal guardrails: just under 10 hours to execute on practice data (4 hours to find, 6 to verify)
+# DFS with more guardrails, including eliminating paths with heat losses currently below the minimum but far enough away from the end that they would be above the minimum once they reached there: just under 4 hours to execute on practice data (2 hours to find, 2 to verify)
