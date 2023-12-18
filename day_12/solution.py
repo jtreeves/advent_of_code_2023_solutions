@@ -54,6 +54,7 @@ class ConditionsRecord:
             else:
                 full_scenario = possibility.scenario + self.original_conditions[current_index:]
                 if not self.check_if_scenario_violates_pattern(full_scenario):
+                    print('FINAL SCENARIO:', full_scenario)
                     acceptable_arrangements += 1
         return acceptable_arrangements
 
