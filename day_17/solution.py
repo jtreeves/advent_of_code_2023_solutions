@@ -89,7 +89,8 @@ class City:
                 total_heat_loss = path.heat_loss
                 print(path)
             else:
-                print('MINIMAL HEAT LOSS SO FAR:', total_heat_loss)
+                print('*** MINIMAL HEAT LOSS SO FAR:', total_heat_loss)
+                print('PATHS STILL IN QUEUE:', len(paths))
                 max_in_direction = 3
                 current_steps_in_direction = path.current_steps_in_direction
                 first_heat_loss = path.heat_loss
@@ -155,25 +156,25 @@ class City:
                     first_heat_loss += first_block.heat_loss
                     first_end_block = first_block
                     first_tracked_blocks[first_block.name][first_direction] = first_step + 1
-                    print('NOT FINAL - BLOCK:', first_end_block.name)
-                    print('NOT FINAL - HEAT LOSS:', first_heat_loss)
-                    if first_end_block.name != path.end.name and (total_heat_loss == 0 or (total_heat_loss != 0 and first_heat_loss < total_heat_loss)):
+                    if first_end_block.name != path.end.name and (total_heat_loss == 0 or (total_heat_loss != 0 and first_heat_loss + self.end.x - first_end_block.x + self.end.y - first_end_block.y < total_heat_loss)):
+                        print('NEW BLOCK:', first_end_block.name)
+                        print('NEW HEAT LOSS:', first_heat_loss)
                         paths.append(Path(first_direction, 0, first_heat_loss, first_step + 1, first_block.x if first_block.x > path.highest_x else path.highest_x, first_block.y if first_block.y > path.highest_y else path.highest_y, first_end_block, first_tracked_blocks))
                 if second_block and second_tracked_blocks[second_block.name][second_direction] == 0 and second_block.x >= path.highest_x - 1 and second_block.y >= path.highest_y - 1:
                     second_heat_loss += second_block.heat_loss
                     second_end_block = second_block
                     second_tracked_blocks[second_block.name][second_direction] = second_step + 1
-                    print('NOT FINAL - BLOCK:', second_end_block.name)
-                    print('NOT FINAL - HEAT LOSS:', second_heat_loss)
-                    if second_end_block.name != path.end.name and (total_heat_loss == 0 or (total_heat_loss != 0 and second_heat_loss < total_heat_loss)):
+                    if second_end_block.name != path.end.name and (total_heat_loss == 0 or (total_heat_loss != 0 and second_heat_loss + self.end.x - second_end_block.x + self.end.y - second_end_block.y < total_heat_loss)):
+                        print('NEW BLOCK:', second_end_block.name)
+                        print('NEW HEAT LOSS:', second_heat_loss)
                         paths.append(Path(second_direction, 0, second_heat_loss, second_step + 1, second_block.x if second_block.x > path.highest_x else path.highest_x, second_block.y if second_block.y > path.highest_y else path.highest_y, second_end_block, second_tracked_blocks))
                 if straight_block and path.direction and straight_tracked_blocks[straight_block.name][path.direction] == 0 and current_steps_in_direction + 1 < max_in_direction and straight_block.x >= path.highest_x - 1 and straight_block.y >= path.highest_y - 1:
                     straight_heat_loss += straight_block.heat_loss
                     straight_end_block = straight_block
                     straight_tracked_blocks[straight_block.name][path.direction] = straight_step + 1
-                    print('NOT FINAL - BLOCK:', straight_end_block.name)
-                    print('NOT FINAL - HEAT LOSS:', straight_heat_loss)
-                    if straight_end_block.name != path.end.name and (total_heat_loss == 0 or (total_heat_loss != 0 and straight_heat_loss < total_heat_loss)):
+                    if straight_end_block.name != path.end.name and (total_heat_loss == 0 or (total_heat_loss != 0 and straight_heat_loss + self.end.x - straight_end_block.x + self.end.y - straight_end_block.y < total_heat_loss)):
+                        print('NEW BLOCK:', straight_end_block.name)
+                        print('NEW HEAT LOSS:', straight_heat_loss)
                         paths.append(Path(path.direction, current_steps_in_direction + 1, straight_heat_loss, straight_step + 1, straight_block.x if straight_block.x > path.highest_x else path.highest_x, straight_block.y if straight_block.y > path.highest_y else path.highest_y, straight_end_block, straight_tracked_blocks))
         return total_heat_loss
 
