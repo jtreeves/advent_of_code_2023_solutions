@@ -90,7 +90,7 @@ class City:
                 print(path)
             else:
                 print('*** MINIMAL HEAT LOSS SO FAR:', total_heat_loss)
-                print('PATHS STILL IN QUEUE:', len(paths))
+                print('PATHS STILL IN STACK:', len(paths))
                 max_in_direction = 3
                 current_steps_in_direction = path.current_steps_in_direction
                 first_heat_loss = path.heat_loss
