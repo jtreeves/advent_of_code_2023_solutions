@@ -40,19 +40,8 @@ def calculate_area_with_shoelace(vertices: Sequence[Tuple[int, int]]) -> int:
     for index in range(size):
         x1, y1 = vertices[index]
         x2, y2 = vertices[(index + 1) % size]
-        area += x1 * y2 - x2 * y1
-    return int(abs(area) / 2)
-
-
-def calculate_perimeter(vertices: Sequence[Tuple[int, int]]) -> int:
-    perimeter = 0
-    for index in range(len(vertices)):
-        x2, y2 = vertices[index]
-        x1, y1 = vertices[index - 1]
-        dx = abs(x2 - x1)
-        dy = abs(y2 - y1)
-        perimeter += dx + dy
-    return perimeter
+        area += x1 * y2 - x2 * y1 + abs(x2 - x1) + abs(y2 - y1)
+    return 1 + abs(area) // 2
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
@@ -61,11 +50,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     steps = get_list_of_lines(data)
     plan = create_dig_plan(steps)
     vertices = extract_vertices_from_plan(plan)
-    print('VERTICES:', vertices)
     area = calculate_area_with_shoelace(vertices)
-    perimeter = calculate_perimeter(vertices)
-    print('AREA:', area)
-    print('PERIMETER:', perimeter)
     part_1 = area
     part_2 = 2 if data else 0
     end_time = time.time()
