@@ -34,6 +34,27 @@ def extract_vertices_from_plan(plan: dict[Tuple[int, int], str]) -> Sequence[Tup
     return vertices
 
 
+def convert_colors_to_vertices(plan: dict[Tuple[int, int], str]) -> Sequence[Tuple[int, int]]:
+    vertices: Sequence[Tuple[int, int]] = []
+    current_vertex = (0, 0)
+    for color in plan.values():
+        direction_code = int(color[-1])
+        direction = "R" if direction_code == 0 else "D" if direction_code == 1 else "L" if direction_code == 2 else "U"
+        length = int(color[1:-1], 16)
+        x1, y1 = current_vertex
+        if direction == "R":
+            x2, y2 = x1 + length, y1
+        elif direction == "D":
+            x2, y2 = x1, y1 + length
+        elif direction == "L":
+            x2, y2 = x1 - length, y1
+        else:
+            x2, y2 = x1, y1 - length
+        current_vertex = (x2, y2)
+        vertices.append(current_vertex)
+    return vertices
+
+
 def calculate_area_with_shoelace(vertices: Sequence[Tuple[int, int]]) -> int:
     area = 0
     size = len(vertices)
@@ -49,10 +70,10 @@ def solve_problem(is_official: bool) -> SolutionResults:
     data = extract_data_from_file(18, is_official)
     steps = get_list_of_lines(data)
     plan = create_dig_plan(steps)
-    vertices = extract_vertices_from_plan(plan)
-    area = calculate_area_with_shoelace(vertices)
-    part_1 = area
-    part_2 = 2 if data else 0
+    original_vertices = extract_vertices_from_plan(plan)
+    color_vertices = convert_colors_to_vertices(plan)
+    part_1 = calculate_area_with_shoelace(original_vertices)
+    part_2 = calculate_area_with_shoelace(color_vertices)
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(18, part_1, part_2, execution_time)
