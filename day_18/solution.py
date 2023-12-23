@@ -13,16 +13,7 @@ def create_dig_plan(steps: List[str]) -> dict[Tuple[int, int], str]:
         direction = elements[0]
         length = int(elements[1])
         color = elements[2][1:-1]
-        x1, y1 = current_vertex
-        if direction == "R":
-            x2, y2 = x1 + length, y1
-        elif direction == "D":
-            x2, y2 = x1, y1 + length
-        elif direction == "L":
-            x2, y2 = x1 - length, y1
-        else:
-            x2, y2 = x1, y1 - length
-        current_vertex = (x2, y2)
+        current_vertex = determine_next_vertex(current_vertex, direction, length)
         plan[current_vertex] = color
     return plan
 
@@ -41,18 +32,23 @@ def convert_colors_to_vertices(plan: dict[Tuple[int, int], str]) -> Sequence[Tup
         direction_code = int(color[-1])
         direction = "R" if direction_code == 0 else "D" if direction_code == 1 else "L" if direction_code == 2 else "U"
         length = int(color[1:-1], 16)
-        x1, y1 = current_vertex
-        if direction == "R":
-            x2, y2 = x1 + length, y1
-        elif direction == "D":
-            x2, y2 = x1, y1 + length
-        elif direction == "L":
-            x2, y2 = x1 - length, y1
-        else:
-            x2, y2 = x1, y1 - length
-        current_vertex = (x2, y2)
+        current_vertex = determine_next_vertex(current_vertex, direction, length)
         vertices.append(current_vertex)
     return vertices
+
+
+def determine_next_vertex(current_vertex: Tuple[int, int], direction: str, length: int) -> Tuple[int, int]:
+    x1, y1 = current_vertex
+    if direction == "R":
+        x2, y2 = x1 + length, y1
+    elif direction == "D":
+        x2, y2 = x1, y1 + length
+    elif direction == "L":
+        x2, y2 = x1 - length, y1
+    else:
+        x2, y2 = x1, y1 - length
+    next_vertex = (x2, y2)
+    return next_vertex
 
 
 def calculate_area_with_shoelace(vertices: Sequence[Tuple[int, int]]) -> int:
