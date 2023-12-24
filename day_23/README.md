@@ -78,7 +78,7 @@ Find the longest hike you can take through the hiking trails listed on your map.
 
 ### Solution
 
-NOT YET SOLVED
+2074
 
 ## Part Two
 
