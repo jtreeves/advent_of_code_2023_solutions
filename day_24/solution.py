@@ -15,9 +15,11 @@ def determine_linear_equation_elements(data: str) -> List[List[int]]:
         velocities = parts[1].split(",")
         xc = int(constants[0])
         yc = int(constants[1])
+        zc = int(constants[2])
         xv = int(velocities[0])
         yv = int(velocities[1])
-        linear_equation_elements.append([xc, yc, xv, yv])
+        zv = int(velocities[2])
+        linear_equation_elements.append([xc, yc, zc, xv, yv, zv])
     return linear_equation_elements
 
 
@@ -52,7 +54,7 @@ def determine_2d_intersection_point(coefficients: List[List[int]], constants: Li
         return None
 
 
-def find_all_intersections_within_interval(equation_elements: List[List[int]]) -> int:
+def find_all_2d_intersections_within_interval(equation_elements: List[List[int]]) -> int:
     total = 0
     min = 200000000000000
     max = 400000000000000
@@ -60,16 +62,16 @@ def find_all_intersections_within_interval(equation_elements: List[List[int]]) -
         first_equation_elements = equation_elements[index]
         xc1 = first_equation_elements[0]
         yc1 = first_equation_elements[1]
-        xv1 = first_equation_elements[2]
-        yv1 = first_equation_elements[3]
+        xv1 = first_equation_elements[3]
+        yv1 = first_equation_elements[4]
         first_coefficients = [yv1, -1 * xv1]
         first_constant = yv1 * xc1 - xv1 * yc1
         for second_index in range(index + 1, len(equation_elements)):
             second_equation_elements = equation_elements[second_index]
             xc2 = second_equation_elements[0]
             yc2 = second_equation_elements[1]
-            xv2 = second_equation_elements[2]
-            yv2 = second_equation_elements[3]
+            xv2 = second_equation_elements[3]
+            yv2 = second_equation_elements[4]
             second_coefficients = [yv2, -1 * xv2]
             second_constant = yv2 * xc2 - xv2 * yc2
             coefficients = [first_coefficients, second_coefficients]
@@ -89,7 +91,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(24, is_official)
     equation_elements = determine_linear_equation_elements(data)
-    part_1 = find_all_intersections_within_interval(equation_elements)
+    part_1 = find_all_2d_intersections_within_interval(equation_elements)
     part_2 = 2 if data else 0
     end_time = time.time()
     execution_time = end_time - start_time
