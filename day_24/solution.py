@@ -125,39 +125,14 @@ def find_velocity_for_dimension(equation_elements: List[List[int]], velocity_ind
     return velocities.pop()
 
 
-def confirm_equation_allows_full_interception(equation_elements: List[List[int]], possible_equation: List[int]) -> bool:
-    allows = True
-    pxc, pyc, pzc, pxv, pyv, pzv = possible_equation
-    for equation in equation_elements:
-        xc, yc, zc, xv, yv, zv = equation
-        dx = pxv - xv
-        dy = pyv - yv
-        dz = pzv - zv
-        if (dx == 0 and pxc == xc) or (dy == 0 and pyc == yc) or (dz == 0 and pzc == zc):
-            continue
-        else:
-            if dx == 0 or dy == 0 or dz == 0:
-                allows = False
-            else:
-                tx = (xc - pxc) / dx
-                ty = (yc - pyc) / dy
-                tz = (zc - pzc) / dz
-                rx = (xc - pxc) % dx
-                ry = (yc - pyc) % dy
-                rz = (zc - pzc) % dz
-                if tx != ty or tx != tz or ty != tz or tx <= 0 or ty <= 0 or tz <= 0 or rx != 0 or ry != 0 or rz != 0:
-                    allows = False
-    return allows
-
-
-def calculate_initial_positions_with_cramers_rule(equation_elements: List[List[int]], starting_index: int) -> List[int]:
+def calculate_initial_positions_with_cramers_rule(equation_elements: List[List[int]]) -> List[int]:
     x_velocity = find_velocity_for_dimension(equation_elements, 3)
     y_velocity = find_velocity_for_dimension(equation_elements, 4)
     z_velocity = find_velocity_for_dimension(equation_elements, 5)
-    index = starting_index
+    index = 0
     coefficients: List[List[int]] = []
     constants: List[int] = []
-    while index < starting_index + 3:
+    while index < 3:
         xc, yc, zc, xv, yv, zv = equation_elements[index]
         total_xv = xv - x_velocity
         total_yv = yv - y_velocity
@@ -212,17 +187,6 @@ def calculate_initial_positions_with_cramers_rule(equation_elements: List[List[i
     return [x, y, z, x_velocity, y_velocity, z_velocity]
 
 
-def sum_position_coordinates_allowing_full_intersection(equation_elements: List[List[int]]) -> int:
-    starting_index = 0
-    while starting_index < len(equation_elements) - 3:
-        possibility = calculate_initial_positions_with_cramers_rule(equation_elements, starting_index)
-        allows = confirm_equation_allows_full_interception(equation_elements, possibility)
-        if allows:
-            return sum(possibility[0:3])
-        starting_index += 1
-    return 0
-
-
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(24, is_official)
@@ -230,7 +194,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     minimum = 200000000000000 if is_official else 7
     maximum = 400000000000000 if is_official else 27
     part_1 = find_all_2d_intersections_within_interval(equation_elements, minimum, maximum)
-    part_2 = sum_position_coordinates_allowing_full_intersection(equation_elements)
+    part_2 = sum(calculate_initial_positions_with_cramers_rule(equation_elements)[0:3])
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(24, part_1, part_2, execution_time)
