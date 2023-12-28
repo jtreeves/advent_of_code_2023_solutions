@@ -1,5 +1,6 @@
 import time
-from typing import List
+from math import log10, ceil
+from typing import List, Set
 from utils.get_list_of_lines import get_list_of_lines
 from utils.extract_data_from_file import extract_data_from_file
 from utils.SolutionResults import SolutionResults
@@ -54,10 +55,8 @@ def determine_2d_intersection_point(coefficients: List[List[int]], constants: Li
         return None
 
 
-def find_all_2d_intersections_within_interval(equation_elements: List[List[int]]) -> int:
+def find_all_2d_intersections_within_interval(equation_elements: List[List[int]], minimum: int, maximum: int) -> int:
     total = 0
-    min = 200000000000000
-    max = 400000000000000
     for index in range(len(equation_elements) - 1):
         first_equation_elements = equation_elements[index]
         xc1 = first_equation_elements[0]
@@ -82,17 +81,156 @@ def find_all_2d_intersections_within_interval(equation_elements: List[List[int]]
                 y = intersection_point[1]
                 t1 = (x - xc1) / xv1
                 t2 = (x - xc2) / xv2
-                if min < x < max and min < y < max and t1 > 0 and t2 > 0:
+                if minimum < x < maximum and minimum < y < maximum and t1 > 0 and t2 > 0:
                     total += 1
     return total
+
+
+def get_velocity_magnitude_for_dimension(equation_elements: List[List[int]], velocity_index: int) -> int:
+    magnitude = 0
+    for equation in equation_elements:
+        velocity = equation[velocity_index]
+        current_magnitude = ceil(log10(abs(velocity)))
+        if current_magnitude > magnitude:
+            magnitude = current_magnitude
+    return magnitude
+
+
+def find_velocity_for_dimension(equation_elements: List[List[int]], velocity_index: int) -> int:
+    velocities: Set[int] = set()
+    index = 0
+    velocity_magnitude = get_velocity_magnitude_for_dimension(equation_elements, velocity_index)
+    while len(velocities) != 1 and index < len(equation_elements) - 1:
+        first_equation_elements = equation_elements[index]
+        v1 = first_equation_elements[velocity_index]
+        for second_index in range(index + 1, len(equation_elements)):
+            second_equation_elements = equation_elements[second_index]
+            v2 = second_equation_elements[velocity_index]
+            if v1 == v2:
+                sub_velocities: Set[int] = set()
+                constant_index = velocity_index - 3
+                c1 = first_equation_elements[constant_index]
+                c2 = second_equation_elements[constant_index]
+                distance = abs(c2 - c1)
+                factors = [i for i in range(-10**velocity_magnitude, 10**velocity_magnitude) if i != 0 and distance % i == 0]
+                for factor in factors:
+                    potential_velocity = v1 - factor
+                    if potential_velocity:
+                        sub_velocities.add(potential_velocity)
+                if len(velocities):
+                    velocities &= sub_velocities
+                else:
+                    velocities = sub_velocities
+        index += 1
+    return velocities.pop()
+
+
+def confirm_equation_allows_full_interception(equation_elements: List[List[int]], possible_equation: List[int]) -> bool:
+    allows = True
+    pxc, pyc, pzc, pxv, pyv, pzv = possible_equation
+    for equation in equation_elements:
+        xc, yc, zc, xv, yv, zv = equation
+        dx = pxv - xv
+        dy = pyv - yv
+        dz = pzv - zv
+        if (dx == 0 and pxc == xc) or (dy == 0 and pyc == yc) or (dz == 0 and pzc == zc):
+            continue
+        else:
+            if dx == 0 or dy == 0 or dz == 0:
+                allows = False
+            else:
+                tx = (xc - pxc) / dx
+                ty = (yc - pyc) / dy
+                tz = (zc - pzc) / dz
+                rx = (xc - pxc) % dx
+                ry = (yc - pyc) % dy
+                rz = (zc - pzc) % dz
+                if tx != ty or tx != tz or ty != tz or tx <= 0 or ty <= 0 or tz <= 0 or rx != 0 or ry != 0 or rz != 0:
+                    allows = False
+    return allows
+
+
+def calculate_initial_positions_with_cramers_rule(equation_elements: List[List[int]], starting_index: int) -> List[int]:
+    x_velocity = find_velocity_for_dimension(equation_elements, 3)
+    y_velocity = find_velocity_for_dimension(equation_elements, 4)
+    z_velocity = find_velocity_for_dimension(equation_elements, 5)
+    index = starting_index
+    coefficients: List[List[int]] = []
+    constants: List[int] = []
+    while index < starting_index + 3:
+        xc, yc, zc, xv, yv, zv = equation_elements[index]
+        total_xv = xv - x_velocity
+        total_yv = yv - y_velocity
+        total_zv = zv - z_velocity
+        x_coefficient = total_yv * total_zv
+        y_coefficient = total_xv * total_zv
+        z_coefficient = -2 * total_xv * total_yv
+        coefficients.append([x_coefficient, y_coefficient, z_coefficient])
+        constants.append(xc * x_coefficient + yc * y_coefficient + zc * z_coefficient)
+        index += 1
+    x_coefficients: List[List[int]] = [[], [], []]
+    y_coefficients: List[List[int]] = [[], [], []]
+    z_coefficients: List[List[int]] = [[], [], []]
+    for column in range(3):
+        if column == 0:
+            x_coefficients[0].append(constants[0])
+            x_coefficients[1].append(constants[1])
+            x_coefficients[2].append(constants[2])
+            x_coefficients[0].append(coefficients[0][1])
+            x_coefficients[1].append(coefficients[1][1])
+            x_coefficients[2].append(coefficients[2][1])
+            x_coefficients[0].append(coefficients[0][2])
+            x_coefficients[1].append(coefficients[1][2])
+            x_coefficients[2].append(coefficients[2][2])
+        elif column == 1:
+            y_coefficients[0].append(coefficients[0][0])
+            y_coefficients[1].append(coefficients[1][0])
+            y_coefficients[2].append(coefficients[2][0])
+            y_coefficients[0].append(constants[0])
+            y_coefficients[1].append(constants[1])
+            y_coefficients[2].append(constants[2])
+            y_coefficients[0].append(coefficients[0][2])
+            y_coefficients[1].append(coefficients[1][2])
+            y_coefficients[2].append(coefficients[2][2])
+        else:
+            z_coefficients[0].append(coefficients[0][0])
+            z_coefficients[1].append(coefficients[1][0])
+            z_coefficients[2].append(coefficients[2][0])
+            z_coefficients[0].append(coefficients[0][1])
+            z_coefficients[1].append(coefficients[1][1])
+            z_coefficients[2].append(coefficients[2][1])
+            z_coefficients[0].append(constants[0])
+            z_coefficients[1].append(constants[1])
+            z_coefficients[2].append(constants[2])
+    coefficients_determinant = coefficients[0][0] * (coefficients[1][1] * coefficients[2][2] - coefficients[1][2] * coefficients[2][1]) - coefficients[0][1] * (coefficients[1][0] * coefficients[2][2] - coefficients[1][2] * coefficients[2][0]) + coefficients[0][2] * (coefficients[1][0] * coefficients[2][1] - coefficients[1][1] * coefficients[2][0])
+    x_determinant = x_coefficients[0][0] * (x_coefficients[1][1] * x_coefficients[2][2] - x_coefficients[1][2] * x_coefficients[2][1]) - x_coefficients[0][1] * (x_coefficients[1][0] * x_coefficients[2][2] - x_coefficients[1][2] * x_coefficients[2][0]) + x_coefficients[0][2] * (x_coefficients[1][0] * x_coefficients[2][1] - x_coefficients[1][1] * x_coefficients[2][0])
+    y_determinant = y_coefficients[0][0] * (y_coefficients[1][1] * y_coefficients[2][2] - y_coefficients[1][2] * y_coefficients[2][1]) - y_coefficients[0][1] * (y_coefficients[1][0] * y_coefficients[2][2] - y_coefficients[1][2] * y_coefficients[2][0]) + y_coefficients[0][2] * (y_coefficients[1][0] * y_coefficients[2][1] - y_coefficients[1][1] * y_coefficients[2][0])
+    z_determinant = z_coefficients[0][0] * (z_coefficients[1][1] * z_coefficients[2][2] - z_coefficients[1][2] * z_coefficients[2][1]) - z_coefficients[0][1] * (z_coefficients[1][0] * z_coefficients[2][2] - z_coefficients[1][2] * z_coefficients[2][0]) + z_coefficients[0][2] * (z_coefficients[1][0] * z_coefficients[2][1] - z_coefficients[1][1] * z_coefficients[2][0])
+    x = x_determinant // coefficients_determinant
+    y = y_determinant // coefficients_determinant
+    z = z_determinant // coefficients_determinant
+    return [x, y, z, x_velocity, y_velocity, z_velocity]
+
+
+def sum_position_coordinates_allowing_full_intersection(equation_elements: List[List[int]]) -> int:
+    starting_index = 0
+    while starting_index < len(equation_elements) - 3:
+        possibility = calculate_initial_positions_with_cramers_rule(equation_elements, starting_index)
+        allows = confirm_equation_allows_full_interception(equation_elements, possibility)
+        if allows:
+            return sum(possibility[0:3])
+        starting_index += 1
+    return 0
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(24, is_official)
     equation_elements = determine_linear_equation_elements(data)
-    part_1 = find_all_2d_intersections_within_interval(equation_elements)
-    part_2 = 2 if data else 0
+    minimum = 200000000000000 if is_official else 7
+    maximum = 400000000000000 if is_official else 27
+    part_1 = find_all_2d_intersections_within_interval(equation_elements, minimum, maximum)
+    part_2 = sum_position_coordinates_allowing_full_intersection(equation_elements)
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(24, part_1, part_2, execution_time)

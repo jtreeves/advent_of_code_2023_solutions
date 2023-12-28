@@ -126,4 +126,4 @@ Determine the exact position and velocity the rock needs to have at time 0 so th
 
 ### Solution
 
-NOT YET SOLVED
+880547248556435

@@ -69,7 +69,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     data = extract_data_from_file(23, is_official)
     hiking_map = create_hiking_map(data)
     part_1 = determine_longest_path_length(hiking_map, True)
-    # EXCEPTION: Brute-force technique requires more than 2 days to execute with full data, and even then it doesn't finish, it merely has found the longest path (not verified it)
+    # EXCEPTION: Brute-force technique requires more than 18 hours to execute with full data before it finds the longest path (no recorded time for how long it takes to verify since it has yet to)
     part_2 = determine_longest_path_length(hiking_map, False)
     end_time = time.time()
     execution_time = end_time - start_time
