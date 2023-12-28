@@ -96,7 +96,7 @@ def get_velocity_magnitude_for_dimension(equation_elements: List[List[int]], vel
     return magnitude
 
 
-def find_velocity_for_dimension(equation_elements: List[List[int]], velocity_index: int) -> int:
+def find_velocity_for_dimension_with_parallels(equation_elements: List[List[int]], velocity_index: int) -> int:
     velocities: Set[int] = set()
     index = 0
     velocity_magnitude = get_velocity_magnitude_for_dimension(equation_elements, velocity_index)
@@ -126,9 +126,9 @@ def find_velocity_for_dimension(equation_elements: List[List[int]], velocity_ind
 
 
 def calculate_initial_positions_with_cramers_rule(equation_elements: List[List[int]]) -> List[int]:
-    x_velocity = find_velocity_for_dimension(equation_elements, 3)
-    y_velocity = find_velocity_for_dimension(equation_elements, 4)
-    z_velocity = find_velocity_for_dimension(equation_elements, 5)
+    x_velocity = find_velocity_for_dimension_with_parallels(equation_elements, 3)
+    y_velocity = find_velocity_for_dimension_with_parallels(equation_elements, 4)
+    z_velocity = find_velocity_for_dimension_with_parallels(equation_elements, 5)
     index = 0
     coefficients: List[List[int]] = []
     constants: List[int] = []
