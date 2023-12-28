@@ -184,7 +184,7 @@ def calculate_initial_positions_with_cramers_rule(equation_elements: List[List[i
     x = x_determinant // coefficients_determinant
     y = y_determinant // coefficients_determinant
     z = z_determinant // coefficients_determinant
-    return [x, y, z, x_velocity, y_velocity, z_velocity]
+    return [x, y, z]
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
@@ -194,7 +194,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     minimum = 200000000000000 if is_official else 7
     maximum = 400000000000000 if is_official else 27
     part_1 = find_all_2d_intersections_within_interval(equation_elements, minimum, maximum)
-    part_2 = sum(calculate_initial_positions_with_cramers_rule(equation_elements)[0:3])
+    part_2 = sum(calculate_initial_positions_with_cramers_rule(equation_elements))
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(24, part_1, part_2, execution_time)
