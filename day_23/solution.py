@@ -50,8 +50,6 @@ def determine_longest_path_length(hiking_map: dict[Tuple[int, int], str], mindin
     end = start_and_end["end"]
     stack: Sequence[Sequence[Tuple[int, int]]] = [[start]]
     while len(stack):
-        print('STACK LENGTH:', len(stack))
-        print('CURRENT MAX LENGTH:', longest_path_length)
         path = stack.pop()
         current_location = path[-1]
         if current_location == end and len(path) - 1 > longest_path_length:
