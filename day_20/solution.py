@@ -39,6 +39,10 @@ class Conjunction(Module):
     def set_input(self, input: str, pulse: int) -> None:
         self.inputs[input] = pulse
 
+    def reset_all_inputs(self) -> None:
+        for input in self.inputs.keys():
+            self.inputs[input] = -1
+
     def check_if_all_inputs_high(self) -> bool:
         pulses = 0
         for pulse in self.inputs.values():
@@ -53,10 +57,11 @@ class Configuration:
         self.modules = self.create_modules(module_descriptions)
         self.pulses = self.create_pulses_tracker()
         self.populate_all_inputs_memos()
-        self.rx_hit = False
 
     def create_modules(self, descriptions: List[str]) -> dict[str, Module]:
-        modules: dict[str, Module] = {}
+        all_modules: dict[str, Module] = {}
+        flip_flops: dict[str, FlipFlop] = {}
+        conjunctions: dict[str, Conjunction] = {}
         for description in descriptions:
             elements = description.split(" -> ")
             name = elements[0]
@@ -66,14 +71,18 @@ class Configuration:
             elif name[0] == "%":
                 name = name[1:]
                 new_module = FlipFlop(name, destinations)
+                flip_flops[name] = new_module
             elif name[0] == "&":
                 name = name[1:]
                 new_module = Conjunction(name, destinations)
+                conjunctions[name] = new_module
             else:
                 new_module = Module(name, destinations)
-            modules[new_module.name] = new_module
-        modules["button"] = Button()
-        return modules
+            all_modules[new_module.name] = new_module
+        all_modules["button"] = Button()
+        self.flip_flops = flip_flops
+        self.conjunctions = conjunctions
+        return all_modules
 
     def create_pulses_tracker(self) -> dict[int, int]:
         pulses_tracker = {
@@ -90,8 +99,8 @@ class Configuration:
         for module in self.modules.values():
             destinations = module.destinations
             for destination in destinations:
-                potential_conjunction = self.modules.get(destination)
-                if potential_conjunction and isinstance(potential_conjunction, Conjunction):
+                potential_conjunction = self.conjunctions.get(destination)
+                if potential_conjunction:
                     potential_conjunction.add_input(module.name)
 
     def propagate_pulses_with_single_push(self) -> None:
@@ -123,20 +132,42 @@ class Configuration:
                         processing_modules.put((next_module, next_pulse, next_name))
                 else:
                     self.update_pulses_tracker(next_pulse)
-                    if destination == "rx" and next_pulse == -1:
-                        self.rx_hit = True
+
+    def count_pushes_in_cycle(self) -> int:
+        pushes = 0
+        all_off = self.check_if_all_flip_flops_off()
+        while not all_off or not pushes:
+            self.propagate_pulses_with_single_push()
+            all_off = self.check_if_all_flip_flops_off()
+            pushes += 1
+        return pushes
 
     def calculate_pulses_product_for_pushes(self, pushes: int) -> int:
-        for _ in range(pushes):
-            self.propagate_pulses_with_single_push()
-        return abs(self.pulses[1] * self.pulses[-1])
+        pushes_in_cycle = self.count_pushes_in_cycle()
+        low_pulses_in_cycle = self.pulses[-1]
+        high_pulses_in_cycle = self.pulses[1]
+        cycles_needed = pushes // pushes_in_cycle
+        total_low_pulses = low_pulses_in_cycle * cycles_needed
+        total_high_pulses = high_pulses_in_cycle * cycles_needed
+        pulses_product = abs(total_low_pulses * total_high_pulses)
+        return pulses_product
 
     def find_minimal_number_of_pushes_for_rx(self) -> int:
         pushes = 0
-        while not self.rx_hit:
-            pushes += 1
-            self.propagate_pulses_with_single_push()
         return pushes
+
+    def check_if_all_flip_flops_off(self) -> bool:
+        statuses = 0
+        for module in self.flip_flops.values():
+            statuses += module.status
+        all_off = statuses == -len(self.flip_flops)
+        return all_off
+
+    def reset(self) -> None:
+        for module in self.flip_flops.values():
+            module.status = -1
+        for module in self.conjunctions.values():
+            module.reset_all_inputs()
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
