@@ -53,6 +53,7 @@ class Configuration:
         self.modules = self.create_modules(module_descriptions)
         self.pulses = self.create_pulses_tracker()
         self.populate_all_inputs_memos()
+        self.rx_hit = False
 
     def create_modules(self, descriptions: List[str]) -> dict[str, Module]:
         modules: dict[str, Module] = {}
@@ -122,19 +123,29 @@ class Configuration:
                         processing_modules.put((next_module, next_pulse, next_name))
                 else:
                     self.update_pulses_tracker(next_pulse)
+                    if destination == "rx" and next_pulse == -1:
+                        self.rx_hit = True
 
     def calculate_pulses_product_for_pushes(self, pushes: int) -> int:
         for _ in range(pushes):
             self.propagate_pulses_with_single_push()
         return abs(self.pulses[1] * self.pulses[-1])
 
+    def find_minimal_number_of_pushes_for_rx(self) -> int:
+        pushes = 0
+        while not self.rx_hit:
+            pushes += 1
+            self.propagate_pulses_with_single_push()
+        return pushes
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(20, is_official)
-    configuration = Configuration(data)
-    part_1 = configuration.calculate_pulses_product_for_pushes(1000)
-    part_2 = 2 if data else 0
+    first_configuration = Configuration(data)
+    second_configuration = Configuration(data)
+    part_1 = first_configuration.calculate_pulses_product_for_pushes(1000)
+    part_2 = second_configuration.find_minimal_number_of_pushes_for_rx()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(20, part_1, part_2, execution_time)
