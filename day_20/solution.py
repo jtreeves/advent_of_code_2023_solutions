@@ -182,11 +182,34 @@ class Configuration:
 
     def find_all_permutations_sending_low_to_output(self) -> List[dict[str, int]]:
         low_permutations: List[dict[str, int]] = []
-        all_permutations = self.find_flip_flop_permutations_for_output_module()
-        for permutation in all_permutations:
-            output_received_low = self.check_output_at_starting_values(permutation)
-            if output_received_low:
-                low_permutations.append(permutation)
+        stack: List[Tuple[str, int, dict[str, int]]] = [(self.output_module, -1, {})]
+        while len(stack):
+            current_module_name, current_pulse_needed, current_flip_flops = stack.pop()
+            if current_module_name == "broadcaster":
+                if current_pulse_needed != 1:
+                    low_permutations.append(current_flip_flops)
+            else:
+                for module in self.modules.values():
+                    for destination in module.destinations:
+                        if destination == current_module_name:
+                            if isinstance(module, FlipFlop):
+                                current_flip_flops_copy = current_flip_flops.copy()
+                                current_flip_flops_copy[module.name] = -current_pulse_needed
+                                current_pulse_needed = -1
+                                stack.append((module.name, current_pulse_needed, current_flip_flops_copy))
+                            elif isinstance(module, Conjunction):
+                                if current_pulse_needed == -1:
+                                    current_pulse_needed = 1
+                                    stack.append((module.name, current_pulse_needed, current_flip_flops.copy()))
+                                else:
+                                    inputs = module.inputs
+                                    options = [list(zip(inputs, p)) for p in product([1, -1], repeat=len(inputs)) if any(v == -1 for v in p)]
+                                    for option in options:
+                                        for sub_module in option:
+                                            name, pulse = sub_module
+                                            stack.append((name, pulse, current_flip_flops.copy()))
+                            else:
+                                stack.append((module.name, current_pulse_needed, current_flip_flops.copy()))
         return low_permutations
 
     def find_minimal_number_of_pushes_for_output(self) -> int:
@@ -200,6 +223,8 @@ def solve_problem(is_official: bool) -> SolutionResults:
     configuration = Configuration(data)
     part_1 = configuration.calculate_pulses_product_for_initial_pushes()
     part_2 = configuration.find_minimal_number_of_pushes_for_output()
+    low_options = configuration.find_all_permutations_sending_low_to_output()
+    print(low_options)
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(20, part_1, part_2, execution_time)
