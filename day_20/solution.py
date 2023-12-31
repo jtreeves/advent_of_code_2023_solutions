@@ -59,8 +59,8 @@ class Configuration:
     def __init__(self, description: str) -> None:
         module_descriptions = get_list_of_lines(description)
         self.modules = self.create_modules(module_descriptions)
-        self.pulses = self.create_pulses_tracker()
         self.output_module = self.find_output_module()
+        self.pulses = self.create_pulses_tracker()
         self.populate_all_inputs_memos()
 
     def create_modules(self, descriptions: List[str]) -> dict[str, Module]:
@@ -82,6 +82,16 @@ class Configuration:
             all_modules[new_module.name] = new_module
         all_modules["button"] = Button()
         return all_modules
+
+    def find_output_module(self) -> str:
+        input_modules: Set[str] = set()
+        destination_modules: Set[str] = set()
+        for module in self.modules.values():
+            input_modules.add(module.name)
+            for destination in module.destinations:
+                destination_modules.add(destination)
+        output_modules = destination_modules - input_modules
+        return output_modules.pop()
 
     def create_pulses_tracker(self) -> dict[int, int]:
         pulses_tracker = {
@@ -141,16 +151,6 @@ class Configuration:
             self.propagate_pulses_with_single_push()
         return abs(self.pulses[1] * self.pulses[-1])
 
-    def find_output_module(self) -> str:
-        input_modules: Set[str] = set()
-        destination_modules: Set[str] = set()
-        for module in self.modules.values():
-            input_modules.add(module.name)
-            for destination in module.destinations:
-                destination_modules.add(destination)
-        output_modules = destination_modules - input_modules
-        return output_modules.pop()
-
     def find_flip_flop_dependencies_for_output_module(self) -> List[str]:
         checked_modules: Set[str] = set()
         flip_flops: Set[str] = set()
@@ -173,10 +173,6 @@ class Configuration:
         dependencies = self.find_flip_flop_dependencies_for_output_module()
         permutations = [dict(zip(dependencies, permutation)) for permutation in product(values, repeat=len(dependencies))]
         return permutations
-
-    def find_minimal_number_of_pushes_for_output(self) -> int:
-        pushes = 0
-        return pushes
 
     def set_starting_values(self, core_flip_flop_values: dict[str, int]) -> None:
         for module in self.modules.values():
@@ -205,6 +201,10 @@ class Configuration:
             if output_received_low:
                 low_permutations.append(permutation)
         return low_permutations
+
+    def find_minimal_number_of_pushes_for_output(self) -> int:
+        pushes = 0
+        return pushes
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
