@@ -15,12 +15,12 @@ class Module:
 
 class Button(Module):
     def __init__(self) -> None:
-        super().__init__('button', ['broadcaster'])
+        super().__init__("button", ["broadcaster"])
 
 
 class Broadcaster(Module):
     def __init__(self, destinations: List[str]) -> None:
-        super().__init__('broadcaster', destinations)
+        super().__init__("broadcaster", destinations)
 
 
 class FlipFlop(Module):
@@ -115,7 +115,7 @@ class Configuration:
     def propagate_pulses_with_single_push(self) -> bool:
         output_received_low = False
         processing_modules: Queue[Tuple[Module, int, str]] = Queue()
-        processing_modules.put((self.modules['button'], 0, ''))
+        processing_modules.put((self.modules["button"], 0, ""))
         while not processing_modules.empty():
             current_module, current_pulse, current_source = processing_modules.get()
             self.update_pulses_tracker(current_pulse)
