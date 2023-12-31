@@ -163,9 +163,8 @@ class Configuration:
                         if destination == current_module_name and module.name not in checked_modules:
                             stack.append(module.name)
                             checked_modules.add(module.name)
-                            potential_flip_flop = self.modules.get(destination)
-                            if potential_flip_flop and isinstance(potential_flip_flop, FlipFlop):
-                                flip_flops.add(destination)
+                            if isinstance(module, FlipFlop):
+                                flip_flops.add(module.name)
         return list(flip_flops)
 
     def find_flip_flop_permutations_for_output_module(self) -> List[dict[str, int]]:
@@ -182,7 +181,7 @@ class Configuration:
                 else:
                     module.status = -1
             elif isinstance(module, Conjunction):
-                module.set_all_inputs(1)
+                module.reset_all_inputs()
                 if any(element in module.inputs.keys() for element in core_flip_flop_values.keys()):
                     for flip_flop in core_flip_flop_values.keys():
                         if flip_flop in module.inputs.keys():
