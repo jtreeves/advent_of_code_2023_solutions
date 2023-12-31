@@ -40,13 +40,6 @@ class Conjunction(Module):
     def set_input(self, input: str, pulse: int) -> None:
         self.inputs[input] = pulse
 
-    def set_all_inputs(self, pulse: int) -> None:
-        for input in self.inputs.keys():
-            self.set_input(input, pulse)
-
-    def reset_all_inputs(self) -> None:
-        self.set_all_inputs(-1)
-
     def check_if_all_inputs_high(self) -> bool:
         pulses = 0
         for pulse in self.inputs.values():
@@ -176,16 +169,11 @@ class Configuration:
     def set_starting_values(self, core_flip_flop_values: dict[str, int]) -> None:
         for module in self.modules.values():
             if isinstance(module, FlipFlop):
-                if module.name in core_flip_flop_values.keys():
-                    module.status = core_flip_flop_values[module.name]
-                else:
-                    module.status = -1
+                module.status = core_flip_flop_values[module.name]
             elif isinstance(module, Conjunction):
-                module.reset_all_inputs()
-                if any(element in module.inputs.keys() for element in core_flip_flop_values.keys()):
-                    for flip_flop in core_flip_flop_values.keys():
-                        if flip_flop in module.inputs.keys():
-                            module.inputs[flip_flop] = core_flip_flop_values[flip_flop]
+                for flip_flop in core_flip_flop_values.keys():
+                    if flip_flop in module.inputs.keys():
+                        module.inputs[flip_flop] = core_flip_flop_values[flip_flop]
 
     def check_output_at_starting_values(self, core_flip_flop_values: dict[str, int]) -> bool:
         self.set_starting_values(core_flip_flop_values)
