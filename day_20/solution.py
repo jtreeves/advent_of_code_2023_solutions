@@ -1,5 +1,5 @@
 import time
-from typing import List, Tuple, Set
+from typing import List, Tuple, Set, Sequence
 from queue import Queue
 from itertools import product
 from utils.get_list_of_lines import get_list_of_lines
@@ -39,6 +39,10 @@ class Conjunction(Module):
 
     def set_input(self, input: str, pulse: int) -> None:
         self.inputs[input] = pulse
+
+    def reset_all_inputs(self) -> None:
+        for input in self.inputs.keys():
+            self.inputs[input] = -1
 
     def check_if_all_inputs_high(self) -> bool:
         pulses = 0
@@ -154,27 +158,32 @@ class Configuration:
     def set_starting_values(self, core_flip_flop_values: dict[str, int]) -> None:
         for module in self.modules.values():
             if isinstance(module, FlipFlop):
-                module.status = core_flip_flop_values[module.name]
+                if module.name in core_flip_flop_values.keys():
+                    module.status = core_flip_flop_values[module.name]
+                else:
+                    module.status = -1
             elif isinstance(module, Conjunction):
-                for flip_flop in core_flip_flop_values.keys():
-                    if flip_flop in module.inputs.keys():
-                        module.inputs[flip_flop] = core_flip_flop_values[flip_flop]
+                module.reset_all_inputs()
+                if any(element in module.inputs.keys() for element in core_flip_flop_values.keys()):
+                    for flip_flop in core_flip_flop_values.keys():
+                        if flip_flop in module.inputs.keys():
+                            module.inputs[flip_flop] = core_flip_flop_values[flip_flop]
 
     def check_output_at_starting_values(self, core_flip_flop_values: dict[str, int]) -> bool:
         self.set_starting_values(core_flip_flop_values)
         output_received_low = self.propagate_pulses_with_single_push()
         return output_received_low
 
-    def find_partial_permutations_sending_low_to_output(self) -> List[dict[str, int]]:
+    def find_permutations_sending_low_to_output(self) -> List[dict[str, int]]:
         low_permutations: List[dict[str, int]] = []
-        stack: List[Tuple[str, int, dict[str, int], Set[str]]] = [(self.output_module, -1, {}, set())]
+        stack: List[Tuple[str, int, dict[str, int], List[str]]] = [(self.output_module, -1, {}, [])]
         while len(stack):
-            current_module_name, current_pulse_needed, current_flip_flops, current_checked = stack.pop()
+            current_module_name, current_pulse_needed, current_flip_flops, current_path = stack.pop()
             if current_module_name == "broadcaster":
                 if current_pulse_needed != 1:
                     low_permutations.append(current_flip_flops)
-            elif current_module_name not in current_checked:
-                current_checked.add(current_module_name)
+            elif len(find_pattern(current_path)[0]) == len(current_path) and len(current_path) < 100:
+                current_path.append(current_module_name)
                 for module in self.modules.values():
                     for destination in module.destinations:
                         if destination == current_module_name:
@@ -182,42 +191,47 @@ class Configuration:
                                 current_flip_flops_copy = current_flip_flops.copy()
                                 current_flip_flops_copy[module.name] = -current_pulse_needed
                                 current_pulse_needed = -1
-                                stack.append((module.name, current_pulse_needed, current_flip_flops_copy, current_checked.copy()))
+                                stack.append((module.name, current_pulse_needed, current_flip_flops_copy, current_path.copy()))
                             elif isinstance(module, Conjunction):
                                 if current_pulse_needed == -1:
                                     current_pulse_needed = 1
-                                    stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_checked.copy()))
+                                    stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_path.copy()))
                                 else:
                                     inputs = module.inputs
                                     options = [list(zip(inputs, p)) for p in product([1, -1], repeat=len(inputs)) if any(v == -1 for v in p)]
                                     for option in options:
                                         for sub_module in option:
                                             name, pulse = sub_module
-                                            stack.append((name, pulse, current_flip_flops.copy(), current_checked.copy()))
+                                            stack.append((name, pulse, current_flip_flops.copy(), current_path.copy()))
                             else:
-                                stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_checked.copy()))
+                                stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_path.copy()))
         return low_permutations
-
-    def find_full_permutations_sending_low_to_output(self) -> Set[Tuple[Tuple[str, int], ...]]:
-        full_permutations: Set[Tuple[Tuple[str, int], ...]] = set()
-        all_flip_flops = self.find_flip_flop_modules()
-        partial_permutations = self.find_partial_permutations_sending_low_to_output()
-        for permutation in partial_permutations:
-            print(permutation)
-            active_flip_flops = set(permutation.keys())
-            if len(active_flip_flops) == len(all_flip_flops):
-                full_permutations.add(tuple((key, value) for key, value in dict(sorted(permutation.items())).items()))
-            else:
-                inactive_flip_flops = all_flip_flops - active_flip_flops
-                inactive_options = [dict(zip(inactive_flip_flops, p)) for p in product([1, -1], repeat=len(inactive_flip_flops))]
-                for option in inactive_options:
-                    combined_permutation = {**permutation, **option}
-                    full_permutations.add(tuple((key, value) for key, value in dict(sorted(combined_permutation.items())).items()))
-        return full_permutations
 
     def find_minimal_number_of_pushes_for_output(self) -> int:
         pushes = 0
         return pushes
+
+
+def find_pattern(sequence: Sequence[int | str]) -> Tuple[Sequence[int | str], int]:
+    minimum_size = 2
+    sequence_length = len(sequence)
+    if sequence_length >= minimum_size * 2:
+        for window_size in range(minimum_size, sequence_length):
+            start_index = sequence_length - window_size
+            pattern_candidate = sequence[start_index:]
+            first_pattern_index = find_sublist_index(sequence, pattern_candidate)
+            if first_pattern_index != start_index and first_pattern_index + len(pattern_candidate) == start_index:
+                return pattern_candidate, first_pattern_index
+        return sequence, 0
+    else:
+        return sequence, 0
+
+
+def find_sublist_index(main_list: Sequence[int | str], sublist: Sequence[int | str]) -> int:
+    for i in range(len(main_list) - len(sublist) + 1):
+        if main_list[i:i + len(sublist)] == sublist:
+            return i
+    return -1
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
@@ -226,8 +240,6 @@ def solve_problem(is_official: bool) -> SolutionResults:
     configuration = Configuration(data)
     part_1 = configuration.calculate_pulses_product_for_initial_pushes()
     part_2 = configuration.find_minimal_number_of_pushes_for_output()
-    low_options = configuration.find_full_permutations_sending_low_to_output()
-    print(low_options)
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(20, part_1, part_2, execution_time)
