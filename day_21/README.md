@@ -102,7 +102,7 @@ Starting from the garden plot marked S on your map, how many garden plots could 
 
 ### Solution
 
-NOT YET SOLVED
+3709
 
 ## Part Two
 
