@@ -86,6 +86,13 @@ class Configuration:
         output_modules = destination_modules - input_modules
         return output_modules.pop()
 
+    def find_flip_flop_modules(self) -> Set[str]:
+        flip_flops: Set[str] = set()
+        for module in self.modules.values():
+            if isinstance(module, FlipFlop):
+                flip_flops.add(module.name)
+        return flip_flops
+
     def create_pulses_tracker(self) -> dict[int, int]:
         pulses_tracker = {
             1: 0,
@@ -144,28 +151,6 @@ class Configuration:
             self.propagate_pulses_with_single_push()
         return abs(self.pulses[1] * self.pulses[-1])
 
-    def find_flip_flop_dependencies_for_output_module(self) -> List[str]:
-        checked_modules: Set[str] = set()
-        flip_flops: Set[str] = set()
-        stack: List[str] = [self.output_module]
-        while len(stack):
-            current_module_name = stack.pop()
-            if current_module_name != "broadcaster":
-                for module in self.modules.values():
-                    for destination in module.destinations:
-                        if destination == current_module_name and module.name not in checked_modules:
-                            stack.append(module.name)
-                            checked_modules.add(module.name)
-                            if isinstance(module, FlipFlop):
-                                flip_flops.add(module.name)
-        return list(flip_flops)
-
-    def find_flip_flop_permutations_for_output_module(self) -> List[dict[str, int]]:
-        values = [-1, 1]
-        dependencies = self.find_flip_flop_dependencies_for_output_module()
-        permutations = [dict(zip(dependencies, permutation)) for permutation in product(values, repeat=len(dependencies))]
-        return permutations
-
     def set_starting_values(self, core_flip_flop_values: dict[str, int]) -> None:
         for module in self.modules.values():
             if isinstance(module, FlipFlop):
@@ -180,7 +165,7 @@ class Configuration:
         output_received_low = self.propagate_pulses_with_single_push()
         return output_received_low
 
-    def find_all_permutations_sending_low_to_output(self) -> List[dict[str, int]]:
+    def find_partial_permutations_sending_low_to_output(self) -> List[dict[str, int]]:
         low_permutations: List[dict[str, int]] = []
         stack: List[Tuple[str, int, dict[str, int]]] = [(self.output_module, -1, {})]
         while len(stack):
@@ -212,6 +197,22 @@ class Configuration:
                                 stack.append((module.name, current_pulse_needed, current_flip_flops.copy()))
         return low_permutations
 
+    def find_full_permutations_sending_low_to_output(self) -> Set[Tuple[Tuple[str, int], ...]]:
+        full_permutations: Set[Tuple[Tuple[str, int], ...]] = set()
+        all_flip_flops = self.find_flip_flop_modules()
+        partial_permutations = self.find_partial_permutations_sending_low_to_output()
+        for permutation in partial_permutations:
+            active_flip_flops = set(permutation.keys())
+            if len(active_flip_flops) == len(all_flip_flops):
+                full_permutations.add(tuple((key, value) for key, value in dict(sorted(permutation.items())).items()))
+            else:
+                inactive_flip_flops = all_flip_flops - active_flip_flops
+                inactive_options = [dict(zip(inactive_flip_flops, p)) for p in product([1, -1], repeat=len(inactive_flip_flops))]
+                for option in inactive_options:
+                    combined_permutation = {**permutation, **option}
+                    full_permutations.add(tuple((key, value) for key, value in dict(sorted(combined_permutation.items())).items()))
+        return full_permutations
+
     def find_minimal_number_of_pushes_for_output(self) -> int:
         pushes = 0
         return pushes
@@ -223,7 +224,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     configuration = Configuration(data)
     part_1 = configuration.calculate_pulses_product_for_initial_pushes()
     part_2 = configuration.find_minimal_number_of_pushes_for_output()
-    low_options = configuration.find_all_permutations_sending_low_to_output()
+    low_options = configuration.find_full_permutations_sending_low_to_output()
     print(low_options)
     end_time = time.time()
     execution_time = end_time - start_time
