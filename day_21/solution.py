@@ -83,6 +83,22 @@ class FarmMap:
             self.positions.update(new_map)
 
 
+def check_if_perfect(value: int, power: int) -> bool:
+    root = round(value ** (1 / power))
+    original = root ** power
+    deviation = abs(original - value)
+    is_perfect = deviation < 1e-10
+    return is_perfect
+
+
+def check_if_perfect_square(value: int) -> bool:
+    return check_if_perfect(value, 2)
+
+
+def check_if_perfect_cube(value: int) -> bool:
+    return check_if_perfect(value, 3)
+
+
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(21, is_official)
