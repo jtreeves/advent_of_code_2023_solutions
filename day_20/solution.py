@@ -1,7 +1,6 @@
 import time
-from typing import List, Tuple, Set, Sequence
+from typing import List, Tuple, Set
 from queue import Queue
-from itertools import product
 from math import lcm
 from utils.get_list_of_lines import get_list_of_lines
 from utils.extract_data_from_file import extract_data_from_file
@@ -43,7 +42,7 @@ class Conjunction(Module):
 
     def reset_all_inputs(self) -> None:
         for input in self.inputs.keys():
-            self.inputs[input] = -1
+            self.set_input(input, -1)
 
     def check_if_all_inputs_high(self) -> bool:
         pulses = 0
@@ -91,13 +90,6 @@ class Configuration:
         output_modules = destination_modules - input_modules
         return output_modules.pop()
 
-    def find_flip_flop_modules(self) -> Set[str]:
-        flip_flops: Set[str] = set()
-        for module in self.modules.values():
-            if isinstance(module, FlipFlop):
-                flip_flops.add(module.name)
-        return flip_flops
-
     def create_pulses_tracker(self) -> dict[int, int]:
         pulses_tracker = {
             1: 0,
@@ -116,6 +108,13 @@ class Configuration:
                 potential_conjunction = self.modules.get(destination)
                 if potential_conjunction and isinstance(potential_conjunction, Conjunction):
                     potential_conjunction.add_input(module.name)
+
+    def reset(self) -> None:
+        for module in self.modules.values():
+            if isinstance(module, FlipFlop):
+                module.status = -1
+            elif isinstance(module, Conjunction):
+                module.reset_all_inputs()
 
     def propagate_pulses_with_single_push(self, tracking_module: str = "") -> bool:
         high_emitted = False
@@ -151,63 +150,6 @@ class Configuration:
                     self.update_pulses_tracker(next_pulse)
         return high_emitted
 
-    def calculate_pulses_product_for_initial_pushes(self) -> int:
-        for _ in range(1000):
-            self.propagate_pulses_with_single_push()
-        return abs(self.pulses[1] * self.pulses[-1])
-
-    def set_starting_values(self, core_flip_flop_values: dict[str, int]) -> None:
-        for module in self.modules.values():
-            if isinstance(module, FlipFlop):
-                if module.name in core_flip_flop_values.keys():
-                    module.status = core_flip_flop_values[module.name]
-                else:
-                    module.status = -1
-            elif isinstance(module, Conjunction):
-                module.reset_all_inputs()
-                if any(element in module.inputs.keys() for element in core_flip_flop_values.keys()):
-                    for flip_flop in core_flip_flop_values.keys():
-                        if flip_flop in module.inputs.keys():
-                            module.inputs[flip_flop] = core_flip_flop_values[flip_flop]
-
-    def check_output_at_starting_values(self, core_flip_flop_values: dict[str, int]) -> bool:
-        self.set_starting_values(core_flip_flop_values)
-        output_received_low = self.propagate_pulses_with_single_push()
-        return output_received_low
-
-    def find_permutations_sending_low_to_output(self) -> List[dict[str, int]]:
-        low_permutations: List[dict[str, int]] = []
-        stack: List[Tuple[str, int, dict[str, int], List[str]]] = [(self.output_module, -1, {}, [])]
-        while len(stack):
-            current_module_name, current_pulse_needed, current_flip_flops, current_path = stack.pop()
-            if current_module_name == "broadcaster":
-                if current_pulse_needed != 1:
-                    low_permutations.append(current_flip_flops)
-            elif len(find_pattern(current_path)[0]) == len(current_path) and len(current_path) < 100:
-                current_path.append(current_module_name)
-                for module in self.modules.values():
-                    for destination in module.destinations:
-                        if destination == current_module_name:
-                            if isinstance(module, FlipFlop):
-                                current_flip_flops_copy = current_flip_flops.copy()
-                                current_flip_flops_copy[module.name] = -current_pulse_needed
-                                current_pulse_needed = -1
-                                stack.append((module.name, current_pulse_needed, current_flip_flops_copy, current_path.copy()))
-                            elif isinstance(module, Conjunction):
-                                if current_pulse_needed == -1:
-                                    current_pulse_needed = 1
-                                    stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_path.copy()))
-                                else:
-                                    inputs = module.inputs
-                                    options = [list(zip(inputs, p)) for p in product([1, -1], repeat=len(inputs)) if any(v == -1 for v in p)]
-                                    for option in options:
-                                        for sub_module in option:
-                                            name, pulse = sub_module
-                                            stack.append((name, pulse, current_flip_flops.copy(), current_path.copy()))
-                            else:
-                                stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_path.copy()))
-        return low_permutations
-
     def find_output_grandparents(self) -> List[str]:
         grandparents: List[str] = []
         for module in self.modules.values():
@@ -226,42 +168,19 @@ class Configuration:
             high_emitted = self.propagate_pulses_with_single_push(name)
         return pushes
 
+    def calculate_pulses_product_for_initial_pushes(self) -> int:
+        for _ in range(1000):
+            self.propagate_pulses_with_single_push()
+        return abs(self.pulses[1] * self.pulses[-1])
+
     def find_minimal_number_of_pushes_for_output(self) -> int:
         first_emissions: List[int] = []
         grandparents = self.find_output_grandparents()
         for grandparent in grandparents:
             first_high = self.find_first_high_emission(grandparent)
             first_emissions.append(first_high)
-        return lcm(*first_emissions)
-
-    def reset(self) -> None:
-        for module in self.modules.values():
-            if isinstance(module, FlipFlop):
-                module.status = -1
-            elif isinstance(module, Conjunction):
-                module.reset_all_inputs()
-
-
-def find_pattern(sequence: Sequence[int | str]) -> Tuple[Sequence[int | str], int]:
-    minimum_size = 2
-    sequence_length = len(sequence)
-    if sequence_length >= minimum_size * 2:
-        for window_size in range(minimum_size, sequence_length):
-            start_index = sequence_length - window_size
-            pattern_candidate = sequence[start_index:]
-            first_pattern_index = find_sublist_index(sequence, pattern_candidate)
-            if first_pattern_index != start_index and first_pattern_index + len(pattern_candidate) == start_index:
-                return pattern_candidate, first_pattern_index
-        return sequence, 0
-    else:
-        return sequence, 0
-
-
-def find_sublist_index(main_list: Sequence[int | str], sublist: Sequence[int | str]) -> int:
-    for i in range(len(main_list) - len(sublist) + 1):
-        if main_list[i:i + len(sublist)] == sublist:
-            return i
-    return -1
+        minimal_pushes = lcm(*first_emissions)
+        return minimal_pushes
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
