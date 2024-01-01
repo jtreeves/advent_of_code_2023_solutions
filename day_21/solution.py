@@ -45,7 +45,6 @@ class FarmMap:
             possible_plot = self.positions.get(coordinates)
             if possible_plot:
                 possible_positions.append(coordinates)
-        print(len(possible_positions))
         return possible_positions
 
     def find_all_possible_positions_after_step_with_multiple_starts(self, starting_positions: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
@@ -61,12 +60,9 @@ class FarmMap:
         while current_step < steps:
             current_step += 1
             current_positions = self.find_all_possible_positions_after_step_with_multiple_starts(current_positions)
-            print(current_step)
-        print(len(current_positions))
         return len(current_positions)
 
     def expand_positions(self) -> None:
-        print(f"SIZE INITIALLY: {len(self.positions.keys())}")
         current_height = self.y_max - self.y_min + 1
         current_width = self.x_max - self.x_min + 1
         self.y_max += current_height
@@ -85,7 +81,6 @@ class FarmMap:
             new_maps.append(shifted_map)
         for new_map in new_maps:
             self.positions.update(new_map)
-        print(f"SIZE AFTER EXPANSION: {len(self.positions.keys())}")
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
