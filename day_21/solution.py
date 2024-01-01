@@ -11,7 +11,6 @@ class FarmMap:
         self.height = self.calculate_height()
         self.width = self.calculate_width()
         self.positions = self.create_positions()
-        self.core_positions = self.positions.copy()
         self.y_min = 0
         self.y_max = self.height - 1
         self.x_min = 0
@@ -61,16 +60,20 @@ class FarmMap:
         while current_step < steps:
             current_step += 1
             current_positions = self.find_all_possible_positions_after_step_with_multiple_starts(current_positions)
+            print(current_step)
         return len(current_positions)
 
     def expand_positions(self) -> None:
-        current_height = self.y_max - self.y_min
-        current_width = self.x_max - self.x_min
+        print(f"SIZE INITIALLY: {len(self.positions.keys())}")
+        current_height = self.y_max - self.y_min + 1
+        current_width = self.x_max - self.x_min + 1
         self.y_max += current_height
         self.y_min -= current_height
         self.x_max += current_width
         self.x_min -= current_width
-        shifts = [(dx, dy) for dx in range(-current_width, current_width + 1) for dy in range(-current_height, current_height + 1) if (dx, dy) != (0, 0)]
+        x_values = [-current_width, current_width, 0]
+        y_values = [-current_height, current_height, 0]
+        shifts = [(x, y) for x in x_values for y in y_values if (x, y) != (0, 0)]
         new_maps: List[dict[Tuple[int, int], bool]] = []
         for shift in shifts:
             shifted_map = {}
@@ -80,15 +83,17 @@ class FarmMap:
             new_maps.append(shifted_map)
         for new_map in new_maps:
             self.positions.update(new_map)
+        print(f"SIZE AFTER EXPANSION: {len(self.positions.keys())}")
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(21, is_official)
     farm = FarmMap(data)
-    steps = 64 if is_official else 10
-    part_1 = farm.determine_reachable_plots_after_certain_steps(steps)
-    part_2 = 2 if data else 0
+    initial_steps = 64 if is_official else 6
+    actual_steps = 26501365 if is_official else 500
+    part_1 = farm.determine_reachable_plots_after_certain_steps(initial_steps)
+    part_2 = farm.determine_reachable_plots_after_certain_steps(actual_steps)
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(21, part_1, part_2, execution_time)
