@@ -167,13 +167,14 @@ class Configuration:
 
     def find_partial_permutations_sending_low_to_output(self) -> List[dict[str, int]]:
         low_permutations: List[dict[str, int]] = []
-        stack: List[Tuple[str, int, dict[str, int]]] = [(self.output_module, -1, {})]
+        stack: List[Tuple[str, int, dict[str, int], Set[str]]] = [(self.output_module, -1, {}, set())]
         while len(stack):
-            current_module_name, current_pulse_needed, current_flip_flops = stack.pop()
+            current_module_name, current_pulse_needed, current_flip_flops, current_checked = stack.pop()
             if current_module_name == "broadcaster":
                 if current_pulse_needed != 1:
                     low_permutations.append(current_flip_flops)
-            else:
+            elif current_module_name not in current_checked:
+                current_checked.add(current_module_name)
                 for module in self.modules.values():
                     for destination in module.destinations:
                         if destination == current_module_name:
@@ -181,20 +182,20 @@ class Configuration:
                                 current_flip_flops_copy = current_flip_flops.copy()
                                 current_flip_flops_copy[module.name] = -current_pulse_needed
                                 current_pulse_needed = -1
-                                stack.append((module.name, current_pulse_needed, current_flip_flops_copy))
+                                stack.append((module.name, current_pulse_needed, current_flip_flops_copy, current_checked.copy()))
                             elif isinstance(module, Conjunction):
                                 if current_pulse_needed == -1:
                                     current_pulse_needed = 1
-                                    stack.append((module.name, current_pulse_needed, current_flip_flops.copy()))
+                                    stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_checked.copy()))
                                 else:
                                     inputs = module.inputs
                                     options = [list(zip(inputs, p)) for p in product([1, -1], repeat=len(inputs)) if any(v == -1 for v in p)]
                                     for option in options:
                                         for sub_module in option:
                                             name, pulse = sub_module
-                                            stack.append((name, pulse, current_flip_flops.copy()))
+                                            stack.append((name, pulse, current_flip_flops.copy(), current_checked.copy()))
                             else:
-                                stack.append((module.name, current_pulse_needed, current_flip_flops.copy()))
+                                stack.append((module.name, current_pulse_needed, current_flip_flops.copy(), current_checked.copy()))
         return low_permutations
 
     def find_full_permutations_sending_low_to_output(self) -> Set[Tuple[Tuple[str, int], ...]]:
@@ -202,6 +203,7 @@ class Configuration:
         all_flip_flops = self.find_flip_flop_modules()
         partial_permutations = self.find_partial_permutations_sending_low_to_output()
         for permutation in partial_permutations:
+            print(permutation)
             active_flip_flops = set(permutation.keys())
             if len(active_flip_flops) == len(all_flip_flops):
                 full_permutations.add(tuple((key, value) for key, value in dict(sorted(permutation.items())).items()))
