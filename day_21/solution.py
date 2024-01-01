@@ -45,6 +45,7 @@ class FarmMap:
             possible_plot = self.positions.get(coordinates)
             if possible_plot:
                 possible_positions.append(coordinates)
+        print(len(possible_positions))
         return possible_positions
 
     def find_all_possible_positions_after_step_with_multiple_starts(self, starting_positions: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
@@ -61,6 +62,7 @@ class FarmMap:
             current_step += 1
             current_positions = self.find_all_possible_positions_after_step_with_multiple_starts(current_positions)
             print(current_step)
+        print(len(current_positions))
         return len(current_positions)
 
     def expand_positions(self) -> None:
@@ -91,7 +93,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     data = extract_data_from_file(21, is_official)
     farm = FarmMap(data)
     initial_steps = 64 if is_official else 6
-    actual_steps = 26501365 if is_official else 500
+    actual_steps = 26501365 if is_official else 100
     part_1 = farm.determine_reachable_plots_after_certain_steps(initial_steps)
     part_2 = farm.determine_reachable_plots_after_certain_steps(actual_steps)
     end_time = time.time()
