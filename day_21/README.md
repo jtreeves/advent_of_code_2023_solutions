@@ -168,4 +168,4 @@ However, the step count the Elf needs is much larger! Starting from the garden p
 
 ### Solution
 
-NOT YET SOLVED
+617361073602319

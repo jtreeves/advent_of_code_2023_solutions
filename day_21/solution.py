@@ -108,12 +108,12 @@ class FarmMap:
         for new_map in new_maps:
             self.positions.update(new_map)
 
-    def determine_quadratic_equation_for_positions(self) -> List[int]:
+    def determine_quadratic_equation_for_positions(self) -> Tuple[float, float, float]:
         core_farm_size = self.height
         # print(core_farm_size)
         # start_value = 5
         half_way_point = core_farm_size // 2
-        steps = [half_way_point, half_way_point + 2 * core_farm_size, half_way_point + 4 * core_farm_size]
+        steps = [half_way_point, half_way_point + core_farm_size, half_way_point + 2 * core_farm_size]
         # steps = [10, 20, 30]
         # steps = [start_value, start_value + core_farm_size, start_value + 2 * core_farm_size]
         print(steps)
@@ -121,10 +121,11 @@ class FarmMap:
         for count in steps:
             positions = self.determine_reachable_plots_after_certain_steps_by_traversal(count)
             coordinate_pairs.append((count, positions))
-        coefficients, constants = create_matrices_for_system(coordinate_pairs)
-        result = solve_3x3_system_with_cramers_rule(coefficients, constants)
-        print('QUADRATIC EQUATION FOR SYSTEM:', result)
-        return result
+        # coefficients, constants = create_matrices_for_system(coordinate_pairs)
+        # result = solve_3x3_system_with_cramers_rule(coefficients, constants)
+        coefficients = determine_quadratic_coefficients_with_lagrange_interpolation(coordinate_pairs)
+        print('QUADRATIC EQUATION FOR SYSTEM:', coefficients)
+        return coefficients
 
 
 def check_if_perfect(value: int, power: int) -> bool:
@@ -272,6 +273,17 @@ def solve_3x3_system_with_cramers_rule(coefficients: List[List[int]], constants:
         variable_value = variable_determinant // coefficients_determinant
         solution.append(variable_value)
     return solution
+
+
+def determine_quadratic_coefficients_with_lagrange_interpolation(coordinate_pairs: List[Tuple[int, int]]) -> Tuple[float, float, float]:
+    p0, p1, p2 = coordinate_pairs
+    x0, y0 = p0
+    x1, y1 = p1
+    x2, y2 = p2
+    a = y0 / ((x0 - x1) * (x0 - x2)) + y1 / ((x1 - x0) * (x1 - x2)) + y2 / ((x2 - x0) * (x2 - x1))
+    b = -y0 * (x1 + x2) / ((x0 - x1) * (x0 - x2)) - y1 * (x0 + x2) / ((x1 - x0) * (x1 - x2)) - y2 * (x0 + x1) / ((x2 - x0) * (x2 - x1))
+    c = y0 * x1 * x2 / ((x0 - x1) * (x0 - x2)) + y1 * x0 * x2 / ((x1 - x0) * (x1 - x2)) + y2 * x0 * x1 / ((x2 - x0) * (x2 - x1))
+    return a, b, c
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
