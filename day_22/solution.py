@@ -3,6 +3,26 @@ from utils.extract_data_from_file import extract_data_from_file
 from utils.SolutionResults import SolutionResults
 
 
+class Brick:
+    def __init__(self) -> None:
+        pass
+
+
+class Stack:
+    def __init__(self) -> None:
+        pass
+
+
+class Snapshot:
+    def __init__(self) -> None:
+        pass
+
+
+class Grid:
+    def __init__(self) -> None:
+        pass
+
+
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(22, is_official)
