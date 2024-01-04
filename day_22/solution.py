@@ -29,6 +29,19 @@ class Brick:
         length = self.end[self.orientation] - self.start[self.orientation]
         return length
 
+    def get_all_cubes(self) -> List[Tuple[int, ...]]:
+        cubes: List[Tuple[int, ...]] = []
+        orientation = self.orientation
+        length = self.length
+        for index in range(length):
+            if orientation == 0:
+                cubes.append((self.start[0] + index, self.start[1], self.start[2]))
+            if orientation == 1:
+                cubes.append((self.start[0], self.start[1] + index, self.start[2]))
+            if orientation == 2:
+                cubes.append((self.start[0], self.start[1], self.start[2] + index))
+        return cubes
+
 
 class Stack:
     def __init__(self, description: str) -> None:
@@ -66,7 +79,7 @@ class Stack:
                 y_max = y
             if z > z_max:
                 z_max = z
-        return x_max, y_max, z_max
+        return x_max + 1, y_max + 1, z_max + 1
 
     def create_points(self) -> dict[Tuple[int, ...], bool]:
         points: dict[Tuple[int, ...], bool] = {}
@@ -76,24 +89,57 @@ class Stack:
                 for z in range(z_max):
                     points[x, y, z] = False
         for brick in self.bricks:
-            points[brick.start] = True
-            points[brick.end] = True
-            x, y, z = brick.start
-            orientation = brick.orientation
-            length = brick.length
-            for index in range(length):
-                if orientation == 0:
-                    points[brick.start[0] + index, brick.start[1], brick.start[2]] = True
-                if orientation == 1:
-                    points[brick.start[0], brick.start[1] + index, brick.start[2]] = True
-                if orientation == 2:
-                    points[brick.start[0], brick.start[1], brick.start[2] + index] = True
+            cubes = brick.get_all_cubes()
+            for cube in cubes:
+                points[cube] = True
         return points
+
+    def move_bricks_down_once(self) -> int:
+        total_bricks_moved = 0
+        for brick in self.bricks:
+            can_move_down = self.check_if_brick_can_move_down(brick)
+            if can_move_down:
+                total_bricks_moved += 1
+                cubes = brick.get_all_cubes()
+                for cube in cubes:
+                    self.points[cube] = False
+                for cube in cubes:
+                    self.points[cube[0], cube[1], cube[2] - (1 + self.time)] = True
+        return total_bricks_moved
+
+    def move_all_bricks_down_to_ground(self) -> None:
+        can_any_bricks_move = True
+        while can_any_bricks_move:
+            self.time += 1
+            total_bricks_moved = self.move_bricks_down_once()
+            can_any_bricks_move = True if total_bricks_moved != 0 else False
+
+    def check_if_brick_can_move_down(self, brick: Brick) -> bool:
+        can_move_down = True
+        if brick.orientation == 2:
+            x, y, z = brick.start
+            if z - (1 + self.time) == 1:
+                can_move_down = False
+            else:
+                can_move_down = not self.points[x, y, z - (1 + self.time)]
+        else:
+            cubes = brick.get_all_cubes()
+            for cube in cubes:
+                x, y, z = cube
+                if z - (1 + self.time) == 1 or self.points[x, y, z - (1 + self.time)]:
+                    can_move_down = False
+        return can_move_down
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(22, is_official)
+    stack = Stack(data)
+    print(stack.points)
+    print(stack.dimensions)
+    print(len(stack.points.keys()))
+    stack.move_all_bricks_down_to_ground()
+    print(stack.points)
     part_1 = 1 if data else 0
     part_2 = 2 if data else 0
     end_time = time.time()
