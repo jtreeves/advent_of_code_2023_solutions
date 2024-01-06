@@ -166,12 +166,42 @@ class Stack:
                 can_be_removed = True
         return can_be_removed
 
-    def count_total_bricks_could_remove(self) -> int:
-        total = 0
+    def find_bricks_could_remove(self) -> Set[str]:
+        self.move_all_bricks_down_to_ground()
+        removable_bricks: Set[str] = set()
         for brick in self.bricks.values():
             can_be_removed = self.check_if_brick_can_be_removed(brick)
             if can_be_removed:
-                total += 1
+                removable_bricks.add(brick.name)
+        return removable_bricks
+
+    def find_bricks_cannot_remove(self) -> Set[str]:
+        total_bricks = set(self.bricks.keys())
+        removable_bricks = self.find_bricks_could_remove()
+        non_removable_bricks: Set[str] = total_bricks - removable_bricks
+        return non_removable_bricks
+
+    def count_total_bricks_could_remove(self) -> int:
+        removable_bricks = self.find_bricks_could_remove()
+        return len(removable_bricks)
+
+    def find_bricks_destroyed_in_chain_reaction(self, brick_name: str) -> Set[str]:
+        affected_bricks: Set[str] = set()
+        bricks_to_search: List[str] = [brick_name]
+        while len(bricks_to_search):
+            current_name = bricks_to_search.pop()
+            current_brick = self.bricks[current_name]
+            bricks_above = current_brick.beneath_bricks
+            affected_bricks |= bricks_above
+            bricks_to_search += bricks_above
+        return affected_bricks
+
+    def count_all_bricks_destroyed_in_chain_reaction(self) -> int:
+        total = 0
+        non_removable_bricks = self.find_bricks_cannot_remove()
+        for brick in non_removable_bricks:
+            bricks_destroyed = self.find_bricks_destroyed_in_chain_reaction(brick)
+            total += len(bricks_destroyed)
         return total
 
 
@@ -179,9 +209,8 @@ def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(22, is_official)
     stack = Stack(data)
-    stack.move_all_bricks_down_to_ground()
     part_1 = stack.count_total_bricks_could_remove()
-    part_2 = 2 if data else 0
+    part_2 = stack.count_all_bricks_destroyed_in_chain_reaction()
     end_time = time.time()
     execution_time = end_time - start_time
     results = SolutionResults(22, part_1, part_2, execution_time)
