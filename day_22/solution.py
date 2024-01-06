@@ -17,6 +17,9 @@ class Brick:
         self.beneath_bricks: Set[str] = set()
         self.above_bricks: Set[str] = set()
 
+    def __repr__(self) -> str:
+        return f"{self.name}: {self.start} -> {self.length}"
+
     def create_coordinates(self, description: str) -> Tuple[int, ...]:
         parts = description.split(",")
         coordinates = tuple([int(part) for part in parts])
@@ -31,7 +34,7 @@ class Brick:
 
     def determine_length(self) -> int:
         length = self.end[self.orientation] - self.start[self.orientation]
-        return length
+        return length + 1
 
     def create_all_cubes(self) -> List[Tuple[int, int, int, str]]:
         cubes: List[Tuple[int, int, int, str]] = []
@@ -79,7 +82,7 @@ class Stack:
         x_max = 0
         y_max = 0
         for brick in self.bricks.values():
-            x, y = brick.start
+            x, y, _ = brick.start
             orientation = brick.orientation
             length = brick.length
             if orientation == 0:
@@ -90,7 +93,7 @@ class Stack:
                 x_max = x
             if y > y_max:
                 y_max = y
-        return x_max, y_max
+        return x_max + 1, y_max + 1
 
     def create_base(self) -> dict[Tuple[int, ...], str]:
         points: dict[Tuple[int, ...], str] = {}
@@ -119,9 +122,11 @@ class Stack:
                     self.base[(x, y, z)] = name
                     potential_below = self.base.get((x, y, z - 1))
                     if potential_below:
-                        full_brick.above_bricks.add(potential_below)
-                        full_below_block = self.bricks[potential_below]
-                        full_below_block.beneath_bricks.add(full_brick.name)
+                        if full_brick.name != potential_below:
+                            full_brick.above_bricks.add(potential_below)
+                        full_below_brick = self.bricks[potential_below]
+                        if full_below_brick.name != full_brick.name:
+                            full_below_brick.beneath_bricks.add(full_brick.name)
         self.bricks_queue = updated_queue
 
     def move_all_bricks_down_to_ground(self) -> None:
@@ -174,11 +179,7 @@ def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(22, is_official)
     stack = Stack(data)
-    # print(stack.base)
-    # print(stack.dimensions)
-    # print(len(stack.base.keys()))
     stack.move_all_bricks_down_to_ground()
-    # print(stack.base)
     part_1 = stack.count_total_bricks_could_remove()
     part_2 = 2 if data else 0
     end_time = time.time()
