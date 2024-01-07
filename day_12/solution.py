@@ -1,4 +1,5 @@
 import time
+from functools import cache
 from typing import List
 from utils.get_list_of_lines import get_list_of_lines
 from utils.extract_data_from_file import extract_data_from_file
@@ -54,9 +55,39 @@ class ConditionsRecord:
             else:
                 full_scenario = possibility.scenario + self.original_conditions[current_index:]
                 if not self.check_if_scenario_violates_pattern(full_scenario):
-                    print('FINAL SCENARIO:', full_scenario)
                     acceptable_arrangements += 1
         return acceptable_arrangements
+
+    def count_acceptable_arrangements_using_recursive_helper(self) -> int:
+        record = self.original_conditions
+        groups = tuple(self.contiguous_groups)
+        count = self.count_acceptable_arrangements_recursive_helper(record, groups)
+        return count
+
+    @cache
+    def count_acceptable_arrangements_recursive_helper(self, record: str, groups: tuple[int, ...]) -> int:
+        if not record:
+            return 1 if len(groups) == 0 else 0
+        if not groups:
+            return 1 if "#" not in record else 0
+        char, rest_of_record = record[0], record[1:]
+        if char == ".":
+            return self.count_acceptable_arrangements_recursive_helper(rest_of_record, groups)
+        if char == "#":
+            group = groups[0]
+            if (
+                len(record) >= group
+                and all(c != "." for c in record[:group])
+                and (len(record) == group or record[group] != "#")
+            ):
+                return self.count_acceptable_arrangements_recursive_helper(record[group + 1:], groups[1:])
+            else:
+                return 0
+        if char == "?":
+            return self.count_acceptable_arrangements_recursive_helper(f"#{rest_of_record}", groups) + self.count_acceptable_arrangements_recursive_helper(
+                f".{rest_of_record}", groups
+            )
+        return 0
 
     def find_next_unknown_condition(self, start_index: int) -> int:
         next_index = self.original_conditions.find("?", start_index)
@@ -129,11 +160,8 @@ class RecordsCollection:
 
     def calculate_total_unfolded_arrangements(self) -> int:
         total = 0
-        index = 0
         for record in self.unfolded_records:
-            index += 1
-            print('CURRENT ROW:', index)
-            total += record.count_acceptable_arrangements()
+            total += record.count_acceptable_arrangements_using_recursive_helper()
         return total
 
 
@@ -148,3 +176,6 @@ def solve_problem(is_official: bool) -> SolutionResults:
     execution_time = end_time - start_time
     results = SolutionResults(12, part_1, part_2, execution_time)
     return results
+
+# CREDIT: https://advent-of-code.xavd.id/writeups/2023/day/12/
+# Used to get recursive solution to solve part 2 efficiently

@@ -130,4 +130,4 @@ Unfold your condition records; what is the new sum of possible arrangement count
 
 ### Solution
 
-NOT YET SOLVED
+18093821750095
