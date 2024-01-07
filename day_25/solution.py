@@ -18,7 +18,8 @@ class WiringDiagram:
 
     def __repr__(self) -> str:
         representation = ""
-        for component in self.components.values():
+        for key in sorted(self.components.keys()):
+            component = self.components[key]
             representation += f"{component.name}: {component.connections}\n"
         return representation
 
