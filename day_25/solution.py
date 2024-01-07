@@ -1,5 +1,5 @@
 import time
-from typing import List
+from typing import List, Set
 from utils.get_list_of_lines import get_list_of_lines
 from utils.extract_data_from_file import extract_data_from_file
 from utils.SolutionResults import SolutionResults
@@ -44,12 +44,29 @@ class WiringDiagram:
                     components[connection] = new_connection
         return components
 
+    def find_partitions_with_stoer_wagner(self) -> List[Set[str]]:
+        first_partition: Set[str] = set(self.components.keys())
+        second_partition: Set[str] = set()
+        for _ in range(3):
+            min_cut_size = float("inf")
+            min_cut_node = ""
+            for component in first_partition:
+                cut_size = sum(1 for neighbor in self.components[component].connections if neighbor in second_partition)
+                if cut_size < min_cut_size:
+                    min_cut_size = cut_size
+                    min_cut_node = component
+            first_partition.remove(min_cut_node)
+            second_partition.add(min_cut_node)
+        return [first_partition, second_partition]
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(25, is_official)
     diagram = WiringDiagram(data)
     print(diagram)
+    partitions = diagram.find_partitions_with_stoer_wagner()
+    print(partitions)
     part_1 = 1 if data else 0
     part_2 = 2 if data else 0
     end_time = time.time()
