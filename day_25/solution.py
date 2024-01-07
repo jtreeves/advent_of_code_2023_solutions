@@ -65,3 +65,4 @@ def solve_problem(is_official: bool) -> SolutionResults:
     return results
 
 # CREDIT: https://www.reddit.com/r/adventofcode/comments/18qbsxs/comment/ketzp94/
+# Used to break components into partitions with minimal graph theory and without advanced algorithms or external libraries
