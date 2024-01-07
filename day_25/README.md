@@ -86,4 +86,6 @@ push the button to restart the system.
 
 ### Solution
 
-NOT YET SOLVED
+You supply all fifty stars and restart global snow production!
+
+As you reach the edge of Snow Island, you can already tell from way up here that everyone will have a white Christmas this year after all.
