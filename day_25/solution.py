@@ -59,15 +59,19 @@ class WiringDiagram:
             new_partition.add(min_cut_node)
         return [initial_partition, new_partition]
 
+    def calculate_product_of_partition_sizes(self) -> int:
+        partitions = self.find_partitions_with_stoer_wagner()
+        first_partition = partitions[0]
+        second_partition = partitions[1]
+        product = len(first_partition) * len(second_partition)
+        return product
+
 
 def solve_problem(is_official: bool) -> SolutionResults:
     start_time = time.time()
     data = extract_data_from_file(25, is_official)
     diagram = WiringDiagram(data)
-    print(diagram)
-    partitions = diagram.find_partitions_with_stoer_wagner()
-    print(partitions)
-    part_1 = 1 if data else 0
+    part_1 = diagram.calculate_product_of_partition_sizes()
     part_2 = 2 if data else 0
     end_time = time.time()
     execution_time = end_time - start_time
