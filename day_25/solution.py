@@ -63,3 +63,5 @@ def solve_problem(is_official: bool) -> SolutionResults:
     execution_time = end_time - start_time
     results = SolutionResults(25, part_1, part_2, execution_time)
     return results
+
+# CREDIT: https://www.reddit.com/r/adventofcode/comments/18qbsxs/comment/ketzp94/
