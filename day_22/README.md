@@ -161,4 +161,4 @@ For each brick, determine how many other bricks would fall if that brick were di
 
 ### Solution
 
-NOT YET SOLVED
+41610

@@ -185,22 +185,26 @@ class Stack:
         removable_bricks = self.find_bricks_could_remove()
         return len(removable_bricks)
 
-    def find_bricks_destroyed_in_chain_reaction(self, brick_name: str) -> Set[str]:
-        affected_bricks: Set[str] = set()
-        bricks_to_search: List[str] = [brick_name]
+    def find_bricks_destroyed_in_chain_reaction(self, brick: Brick) -> Set[str]:
+        affected_bricks: Set[str] = set([brick.name])
+        bricks_to_search: List[Brick] = [brick]
         while len(bricks_to_search):
-            current_name = bricks_to_search.pop()
-            current_brick = self.bricks[current_name]
+            current_brick = bricks_to_search.pop()
             bricks_above = current_brick.beneath_bricks
-            affected_bricks |= bricks_above
-            bricks_to_search += bricks_above
-        return affected_bricks
+            for brick_name in bricks_above:
+                above_brick = self.bricks[brick_name]
+                dependent_bricks = above_brick.above_bricks
+                if dependent_bricks <= affected_bricks:
+                    affected_bricks.add(above_brick.name)
+                    bricks_to_search.append(above_brick)
+        return affected_bricks - set([brick.name])
 
     def count_all_bricks_destroyed_in_chain_reaction(self) -> int:
         total = 0
         non_removable_bricks = self.find_bricks_cannot_remove()
-        for brick in non_removable_bricks:
-            bricks_destroyed = self.find_bricks_destroyed_in_chain_reaction(brick)
+        for brick_name in non_removable_bricks:
+            full_brick = self.bricks[brick_name]
+            bricks_destroyed = self.find_bricks_destroyed_in_chain_reaction(full_brick)
             total += len(bricks_destroyed)
         return total
 
