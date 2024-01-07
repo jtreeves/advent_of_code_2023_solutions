@@ -45,19 +45,19 @@ class WiringDiagram:
         return components
 
     def find_partitions_with_stoer_wagner(self) -> List[Set[str]]:
-        first_partition: Set[str] = set(self.components.keys())
-        second_partition: Set[str] = set()
-        for _ in range(3):
+        initial_partition: Set[str] = set(self.components.keys())
+        new_partition: Set[str] = set()
+        while len(new_partition) < len(initial_partition) - 3:
             min_cut_size = float("inf")
             min_cut_node = ""
-            for component in first_partition:
-                cut_size = sum(1 for neighbor in self.components[component].connections if neighbor in second_partition)
+            for component in initial_partition:
+                cut_size = sum(1 for neighbor in self.components[component].connections if neighbor in new_partition)
                 if cut_size < min_cut_size:
                     min_cut_size = cut_size
                     min_cut_node = component
-            first_partition.remove(min_cut_node)
-            second_partition.add(min_cut_node)
-        return [first_partition, second_partition]
+            initial_partition.remove(min_cut_node)
+            new_partition.add(min_cut_node)
+        return [initial_partition, new_partition]
 
 
 def solve_problem(is_official: bool) -> SolutionResults:
